@@ -279,11 +279,13 @@ class ApiService {
 // SINGLETON INSTANCE AND EXPORT
 // ========================================
 
-// Default configuration (you should modify it according to your environment)
+import { API_BASE_URL, API_TIMEOUT, API_USE_HTTPS } from '@env';
+
+// Default configuration (loaded from environment variables)
 const defaultConfig: ApiConfig = {
-  baseUrl: 'http://192.168.1.100:3000',  // Replace with your Raspberry Pi IP
-  timeout: 10000,                        // 10 second timeout
-  useHttps: false,                       // Change to true if you use HTTPS
+  baseUrl: API_BASE_URL || 'http://192.168.1.100:3000',  // IP from .env file
+  timeout: parseInt(API_TIMEOUT) || 10000,               // Timeout from .env file
+  useHttps: (API_USE_HTTPS === 'true') || false,         // HTTPS setting from .env file
 };
 
 // API service singleton instance

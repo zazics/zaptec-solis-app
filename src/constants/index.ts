@@ -5,14 +5,16 @@
  * to avoid magic values and centralize configuration.
  */
 
+import { API_BASE_URL, API_TIMEOUT, API_RETRY_COUNT, API_RETRY_DELAY } from '@env';
+
 /**
  * Default API configuration
  */
 export const DEFAULT_API_CONFIG = {
-  BASE_URL: 'http://192.168.1.100:3000',
-  TIMEOUT: 10000,
-  RETRY_COUNT: 3,
-  RETRY_DELAY: 1000,
+  BASE_URL: API_BASE_URL || 'http://192.168.1.100:3000',
+  TIMEOUT: parseInt(API_TIMEOUT) || 10000,
+  RETRY_COUNT: parseInt(API_RETRY_COUNT) || 3,
+  RETRY_DELAY: parseInt(API_RETRY_DELAY) || 1000,
 } as const;
 
 /**
