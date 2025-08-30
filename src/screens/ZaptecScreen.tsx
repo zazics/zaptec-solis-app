@@ -1,12 +1,12 @@
 /**
- * ÉCRAN ZAPTEC - Contrôle du chargeur
+ * ZAPTEC SCREEN - Charger Control
  * 
- * Cet écran permet de :
- * - Visualiser l'état du chargeur Zaptec
- * - Contrôler la charge (démarrer/arrêter)
- * - Régler le courant de charge
- * - Voir les informations détaillées du chargeur
- * - Gérer les modes d'automatisation
+ * This screen allows to:
+ * - View the Zaptec charger status
+ * - Control charging (start/stop)
+ * - Set charging current
+ * - View detailed charger information
+ * - Manage automation modes
  */
 
 import React, { useState, useEffect } from 'react';
@@ -24,18 +24,18 @@ import {
   Switch,
 } from 'react-native';
 
-// Import des types et services
+// Import types and services
 import { ZaptecStatus, ZaptecChargerInfo } from '../types';
 import { apiService } from '../services';
 
 /**
- * Composant ZaptecScreen
+ * ZaptecScreen Component
  * 
- * Interface de contrôle complète du chargeur Zaptec
+ * Complete control interface for the Zaptec charger
  */
 const ZaptecScreen: React.FC = () => {
   // ========================================
-  // ÉTAT LOCAL
+  // LOCAL STATE
   // ========================================
 
   const [zaptecStatus, setZaptecStatus] = useState<ZaptecStatus | null>(null);
@@ -44,7 +44,7 @@ const ZaptecScreen: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   
-  // États pour les contrôles
+  // States for controls
   const [isCharging, setIsCharging] = useState<boolean>(false);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [currentInput, setCurrentInput] = useState<string>('');
@@ -52,15 +52,15 @@ const ZaptecScreen: React.FC = () => {
   const [isControlLoading, setIsControlLoading] = useState<boolean>(false);
 
   // ========================================
-  // FONCTIONS
+  // FUNCTIONS
   // ========================================
 
   /**
-   * Charge les données du chargeur depuis l'API
+   * Load charger data from the API
    */
   const loadData = async (): Promise<void> => {
     try {
-      // Chargement en parallèle du statut et des infos détaillées
+      // Parallel loading of status and detailed information
       const [status, info] = await Promise.all([
         apiService.getZaptecStatus(),
         apiService.getZaptecInfo(),
@@ -71,10 +71,10 @@ const ZaptecScreen: React.FC = () => {
       setIsCharging(status.charging || false);
       setLastUpdate(new Date());
     } catch (error) {
-      console.error('Erreur lors du chargement des données Zaptec:', error);
+      console.error('Error loading Zaptec data:', error);
       Alert.alert(
-        'Erreur de connexion',
-        'Impossible de récupérer les données du chargeur.',
+        'Connection Error',
+        'Unable to retrieve charger data.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -84,7 +84,7 @@ const ZaptecScreen: React.FC = () => {
   };
 
   /**
-   * Gère le rafraîchissement manuel
+   * Handle manual refresh
    */
   const handleRefresh = (): void => {
     setIsRefreshing(true);
@@ -92,7 +92,7 @@ const ZaptecScreen: React.FC = () => {
   };
 
   /**
-   * Démarre ou arrête la charge
+   * Start or stop charging
    */
   const handleToggleCharging = async (): Promise<void> => {
     setIsControlLoading(true);
@@ -100,22 +100,22 @@ const ZaptecScreen: React.FC = () => {
     try {
       if (isCharging) {
         await apiService.stopCharging();
-        Alert.alert('Succès', 'Charge arrêtée avec succès.');
+        Alert.alert('Success', 'Charging stopped successfully.');
       } else {
         await apiService.startCharging();
-        Alert.alert('Succès', 'Charge démarrée avec succès.');
+        Alert.alert('Success', 'Charging started successfully.');
       }
       
-      // Actualisation des données après la commande
+      // Refresh data after command
       setTimeout(() => {
         loadData();
-      }, 2000); // Délai pour laisser le temps à la commande de s'effectuer
+      }, 2000); // Delay to allow time for the command to execute
       
     } catch (error) {
-      console.error('Erreur lors du contrôle de charge:', error);
+      console.error('Error controlling charging:', error);
       Alert.alert(
-        'Erreur',
-        'Impossible de contrôler la charge. Vérifiez la connexion.',
+        'Error',
+        'Unable to control charging. Check the connection.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -124,16 +124,16 @@ const ZaptecScreen: React.FC = () => {
   };
 
   /**
-   * Modifie le courant de charge
+   * Modify charging current
    */
   const handleSetCurrent = async (): Promise<void> => {
     const current = parseFloat(currentInput);
     
-    // Validation de l'entrée
+    // Input validation
     if (isNaN(current) || current < 6 || current > 16) {
       Alert.alert(
-        'Valeur invalide',
-        'Le courant doit être entre 6 et 16 ampères.',
+        'Invalid Value',
+        'Current must be between 6 and 16 amperes.',
         [{ text: 'OK' }]
       );
       return;
@@ -143,20 +143,20 @@ const ZaptecScreen: React.FC = () => {
     
     try {
       await apiService.setChargingCurrent(current);
-      Alert.alert('Succès', `Courant réglé à ${current}A avec succès.`);
+      Alert.alert('Success', `Current set to ${current}A successfully.`);
       setIsModalVisible(false);
       setCurrentInput('');
       
-      // Actualisation des données
+      // Data refresh
       setTimeout(() => {
         loadData();
       }, 2000);
       
     } catch (error) {
-      console.error('Erreur lors du réglage du courant:', error);
+      console.error('Error setting current:', error);
       Alert.alert(
-        'Erreur',
-        'Impossible de régler le courant. Vérifiez la connexion.',
+        'Error',
+        'Unable to set current. Check the connection.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -165,31 +165,31 @@ const ZaptecScreen: React.FC = () => {
   };
 
   /**
-   * Formate le mode d'opération en texte lisible
+   * Format operating mode to readable text
    */
   const formatOperatingMode = (mode: string | undefined): string => {
-    if (!mode) return 'Inconnu';
+    if (!mode) return 'Unknown';
     
     const modes: { [key: string]: string } = {
-      '0': 'Inconnu',
-      '1': 'Déconnecté',
-      '2': 'Connecté (en attente)',
-      '3': 'Connecté (en charge)',
-      '5': 'Connecté (terminé)',
+      '0': 'Unknown',
+      '1': 'Disconnected',
+      '2': 'Connected (waiting)',
+      '3': 'Connected (charging)',
+      '5': 'Connected (finished)',
     };
     
     return modes[mode] || mode;
   };
 
   /**
-   * Retourne une couleur basée sur l'état de connexion
+   * Return a color based on connection status
    */
   const getConnectionColor = (connected: boolean | undefined): string => {
     return connected ? '#34C759' : '#FF3B30';
   };
 
   /**
-   * Retourne une couleur basée sur l'état de charge
+   * Return a color based on charging status
    */
   const getChargingColor = (charging: boolean | undefined): string => {
     return charging ? '#007AFF' : '#8E8E93';
@@ -208,17 +208,17 @@ const ZaptecScreen: React.FC = () => {
       if (!isLoading && !isRefreshing && !isControlLoading) {
         loadData();
       }
-    }, 10000); // Actualisation toutes les 10 secondes
+    }, 10000); // Refresh every 10 seconds
 
     return () => clearInterval(interval);
   }, [isLoading, isRefreshing, isControlLoading]);
 
   // ========================================
-  // COMPOSANTS INTERNES
+  // INTERNAL COMPONENTS
   // ========================================
 
   /**
-   * Bouton de contrôle personnalisé
+   * Custom control button
    */
   const ControlButton: React.FC<{
     title: string;
@@ -246,7 +246,7 @@ const ZaptecScreen: React.FC = () => {
   );
 
   /**
-   * Indicateur d'état avec icône
+   * Status indicator with icon
    */
   const StatusIndicator: React.FC<{
     label: string;
@@ -262,14 +262,14 @@ const ZaptecScreen: React.FC = () => {
   );
 
   // ========================================
-  // RENDU CONDITIONNEL
+  // CONDITIONAL RENDERING
   // ========================================
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Chargement des données du chargeur...</Text>
+        <Text style={styles.loadingText}>Loading charger data...</Text>
       </View>
     );
   }
@@ -277,13 +277,13 @@ const ZaptecScreen: React.FC = () => {
   if (!zaptecStatus) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Aucune donnée de chargeur disponible</Text>
+        <Text style={styles.errorText}>No charger data available</Text>
       </View>
     );
   }
 
   // ========================================
-  // RENDU PRINCIPAL
+  // MAIN RENDER
   // ========================================
 
   return (
@@ -297,46 +297,46 @@ const ZaptecScreen: React.FC = () => {
         />
       }
     >
-      {/* En-tête */}
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Chargeur Zaptec</Text>
-        <Text style={styles.chargerName}>{zaptecStatus.name || 'Chargeur principal'}</Text>
+        <Text style={styles.title}>Zaptec Charger</Text>
+        <Text style={styles.chargerName}>{zaptecStatus.name || 'Main charger'}</Text>
         {lastUpdate && (
           <Text style={styles.lastUpdate}>
-            Dernière MAJ : {lastUpdate.toLocaleTimeString('fr-FR')}
+            Last Update: {lastUpdate.toLocaleTimeString('en-US')}
           </Text>
         )}
       </View>
 
-      {/* Indicateurs d'état */}
+      {/* Status indicators */}
       <View style={styles.statusContainer}>
         <StatusIndicator
-          label="Connexion"
-          value={zaptecStatus.online ? 'En ligne' : 'Hors ligne'}
+          label="Connection"
+          value={zaptecStatus.online ? 'Online' : 'Offline'}
           color={getConnectionColor(zaptecStatus.online)}
           icon="🌐"
         />
         <StatusIndicator
-          label="Véhicule"
-          value={zaptecStatus.vehicleConnected ? 'Connecté' : 'Absent'}
+          label="Vehicle"
+          value={zaptecStatus.vehicleConnected ? 'Connected' : 'Not connected'}
           color={getConnectionColor(zaptecStatus.vehicleConnected)}
           icon="🚗"
         />
         <StatusIndicator
-          label="Charge"
-          value={zaptecStatus.charging ? 'En cours' : 'Arrêtée'}
+          label="Charging"
+          value={zaptecStatus.charging ? 'In progress' : 'Stopped'}
           color={getChargingColor(zaptecStatus.charging)}
           icon="⚡"
         />
       </View>
 
-      {/* Section Contrôles */}
+      {/* Controls Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🎛️ Contrôles</Text>
+        <Text style={styles.sectionTitle}>🎛️ Controls</Text>
         
         <View style={styles.controlsContainer}>
           <ControlButton
-            title={isCharging ? 'Arrêter la charge' : 'Démarrer la charge'}
+            title={isCharging ? 'Stop charging' : 'Start charging'}
             onPress={handleToggleCharging}
             disabled={!zaptecStatus.online || !zaptecStatus.vehicleConnected}
             color={isCharging ? '#FF3B30' : '#34C759'}
@@ -344,16 +344,16 @@ const ZaptecScreen: React.FC = () => {
           />
           
           <ControlButton
-            title={`Régler courant (${zaptecStatus.ChargeCurrentSet || 0}A)`}
+            title={`Set current (${zaptecStatus.ChargeCurrentSet || 0}A)`}
             onPress={() => setIsModalVisible(true)}
             disabled={!zaptecStatus.online}
             color="#FF9500"
           />
         </View>
 
-        {/* Switch d'automatisation */}
+        {/* Automation switch */}
         <View style={styles.automationContainer}>
-          <Text style={styles.automationLabel}>Mode automatique</Text>
+          <Text style={styles.automationLabel}>Automatic mode</Text>
           <Switch
             value={automationEnabled}
             onValueChange={setAutomationEnabled}
@@ -363,69 +363,69 @@ const ZaptecScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Section Données de charge */}
+      {/* Charging Data Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>⚡ Données de charge</Text>
+        <Text style={styles.sectionTitle}>⚡ Charging Data</Text>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Puissance actuelle :</Text>
+          <Text style={styles.dataLabel}>Current power:</Text>
           <Text style={[styles.dataValue, { color: '#007AFF' }]}>
             {(zaptecStatus.power || 0).toFixed(0)} W
           </Text>
         </View>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Puissance totale :</Text>
+          <Text style={styles.dataLabel}>Total power:</Text>
           <Text style={styles.dataValue}>
             {((zaptecStatus.totalPower || 0) / 1000).toFixed(1)} kWh
           </Text>
         </View>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Courant configuré :</Text>
+          <Text style={styles.dataLabel}>Configured current:</Text>
           <Text style={styles.dataValue}>
             {zaptecStatus.ChargeCurrentSet || 0} A
           </Text>
         </View>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Mode d'opération :</Text>
+          <Text style={styles.dataLabel}>Operating mode:</Text>
           <Text style={styles.dataValue}>
             {formatOperatingMode(zaptecStatus.operatingMode)}
           </Text>
         </View>
       </View>
 
-      {/* Section Informations du chargeur */}
+      {/* Charger Information Section */}
       {chargerInfo && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ℹ️ Informations du chargeur</Text>
+          <Text style={styles.sectionTitle}>ℹ️ Charger Information</Text>
           <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Numéro de série :</Text>
+            <Text style={styles.dataLabel}>Serial number:</Text>
             <Text style={styles.dataValue}>{chargerInfo.SerialNo}</Text>
           </View>
           <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Installation :</Text>
+            <Text style={styles.dataLabel}>Installation:</Text>
             <Text style={styles.dataValue}>{chargerInfo.InstallationName}</Text>
           </View>
           <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Type d'appareil :</Text>
+            <Text style={styles.dataLabel}>Device type:</Text>
             <Text style={styles.dataValue}>{chargerInfo.DeviceType}</Text>
           </View>
           <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Date de création :</Text>
+            <Text style={styles.dataLabel}>Creation date:</Text>
             <Text style={styles.dataValue}>
-              {new Date(chargerInfo.CreatedOnDate).toLocaleDateString('fr-FR')}
+              {new Date(chargerInfo.CreatedOnDate).toLocaleDateString('en-US')}
             </Text>
           </View>
           <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Actif :</Text>
+            <Text style={styles.dataLabel}>Active:</Text>
             <Text style={[styles.dataValue, { 
               color: chargerInfo.Active ? '#34C759' : '#FF3B30' 
             }]}>
-              {chargerInfo.Active ? 'Oui' : 'Non'}
+              {chargerInfo.Active ? 'Yes' : 'No'}
             </Text>
           </View>
         </View>
       )}
 
-      {/* Modal de réglage du courant */}
+      {/* Current setting modal */}
       <Modal
         visible={isModalVisible}
         transparent={true}
@@ -434,9 +434,9 @@ const ZaptecScreen: React.FC = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Régler le courant de charge</Text>
+            <Text style={styles.modalTitle}>Set charging current</Text>
             <Text style={styles.modalSubtitle}>
-              Entrez une valeur entre 6 et 16 ampères
+              Enter a value between 6 and 16 amperes
             </Text>
             
             <TextInput
@@ -456,7 +456,7 @@ const ZaptecScreen: React.FC = () => {
                   setCurrentInput('');
                 }}
               >
-                <Text style={styles.modalButtonCancelText}>Annuler</Text>
+                <Text style={styles.modalButtonCancelText}>Cancel</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -467,7 +467,7 @@ const ZaptecScreen: React.FC = () => {
                 {isControlLoading ? (
                   <ActivityIndicator color="white" />
                 ) : (
-                  <Text style={styles.modalButtonConfirmText}>Confirmer</Text>
+                  <Text style={styles.modalButtonConfirmText}>Confirm</Text>
                 )}
               </TouchableOpacity>
             </View>

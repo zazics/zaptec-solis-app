@@ -1,134 +1,134 @@
 /**
- * TYPES API - Définitions pour les réponses de l'API Node.js
+ * API TYPES - Definitions for Node.js API responses
  * 
- * Ce fichier contient les interfaces pour les réponses standardisées
- * de votre API Node.js ainsi que les types de configuration de l'application.
+ * This file contains interfaces for standardized responses
+ * from your Node.js API as well as application configuration types.
  */
 
 /**
- * Interface pour les réponses standardisées de l'API
- * Toutes les réponses de votre API Node.js suivent ce format
+ * Interface for standardized API responses
+ * All responses from your Node.js API follow this format
  */
 export interface ApiResponse<T = any> {
-  /** Indique si la requête a réussi */
+  /** Indicates if the request was successful */
   success: boolean;
-  /** Message d'information ou d'erreur */
+  /** Information or error message */
   message: string;
-  /** Timestamp de la réponse */
+  /** Response timestamp */
   timestamp: string;
-  /** Données spécifiques à la réponse (optionnel) */
+  /** Response-specific data (optional) */
   data?: T;
 }
 
 /**
- * Interface pour les erreurs API
- * Utilisée quand une requête échoue
+ * Interface for API errors
+ * Used when a request fails
  */
 export interface ApiError {
-  /** Code d'erreur HTTP */
+  /** HTTP error code */
   status: number;
-  /** Message d'erreur */
+  /** Error message */
   message: string;
-  /** Détails supplémentaires de l'erreur */
+  /** Additional error details */
   error?: string;
-  /** Timestamp de l'erreur */
+  /** Error timestamp */
   timestamp: string;
 }
 
 /**
- * Interface pour la configuration de connexion à votre API Node.js
- * Stocke les informations nécessaires pour se connecter à votre système
+ * Interface for connection configuration to your Node.js API
+ * Stores information needed to connect to your system
  */
 export interface ApiConfig {
-  /** URL de base de votre API Node.js (ex: http://192.168.1.100:3000) */
+  /** Base URL of your Node.js API (ex: http://192.168.1.100:3000) */
   baseUrl: string;
-  /** Timeout pour les requêtes en millisecondes */
+  /** Request timeout in milliseconds */
   timeout?: number;
-  /** Token d'authentification si nécessaire */
+  /** Authentication token if needed */
   authToken?: string;
-  /** Indique si les requêtes doivent utiliser HTTPS */
+  /** Indicates if requests should use HTTPS */
   useHttps?: boolean;
 }
 
 /**
- * Interface pour les paramètres de l'application mobile
- * Stocke les préférences utilisateur et la configuration
+ * Interface for mobile application settings
+ * Stores user preferences and configuration
  */
 export interface AppSettings {
-  /** Configuration de l'API */
+  /** API configuration */
   api: ApiConfig;
-  /** Intervalle de rafraîchissement des données en millisecondes */
+  /** Data refresh interval in milliseconds */
   refreshInterval: number;
-  /** Thème de l'application (light/dark) */
+  /** Application theme (light/dark) */
   theme: 'light' | 'dark';
-  /** Notifications activées */
+  /** Notifications enabled */
   notificationsEnabled: boolean;
-  /** Unités à afficher (metric/imperial) */
+  /** Units to display (metric/imperial) */
   units: 'metric' | 'imperial';
-  /** Langue de l'interface */
+  /** Interface language */
   language: 'fr' | 'en';
 }
 
 /**
- * Interface pour l'état global de l'application
- * Utilisée par le gestionnaire d'état (Redux/Zustand)
+ * Interface for global application state
+ * Used by state manager (Redux/Zustand)
  */
 export interface AppState {
-  /** Configuration et paramètres */
+  /** Configuration and settings */
   settings: AppSettings;
-  /** Statut de connexion à l'API */
+  /** API connection status */
   connectionStatus: 'connected' | 'disconnected' | 'connecting' | 'error';
-  /** Dernière erreur survenue */
+  /** Last error that occurred */
   lastError?: string;
-  /** Indique si l'application charge des données */
+  /** Indicates if the application is loading data */
   isLoading: boolean;
-  /** Timestamp de la dernière mise à jour */
+  /** Last update timestamp */
   lastUpdate?: Date;
 }
 
 /**
- * Type pour les endpoints disponibles dans votre API
- * Facilite la navigation et évite les erreurs de frappe
+ * Type for available endpoints in your API
+ * Facilitates navigation and avoids typos
  */
 export type ApiEndpoint = 
-  | '/solis/status'           // État de l'onduleur Solis
-  | '/solis/data'             // Données complètes Solis
-  | '/zaptec/status'          // État du chargeur Zaptec
-  | '/zaptec/info'            // Informations du chargeur
-  | '/zaptec/start'           // Démarrer la charge
-  | '/zaptec/stop'            // Arrêter la charge
-  | '/zaptec/current'         // Régler le courant
-  | '/automation/status'      // État de l'automatisation
-  | '/automation/mode'        // Mode d'automatisation
+  | '/solis/status'           // Solis inverter status
+  | '/solis/data'             // Complete Solis data
+  | '/zaptec/status'          // Zaptec charger status
+  | '/zaptec/info'            // Charger information
+  | '/zaptec/start'           // Start charging
+  | '/zaptec/stop'            // Stop charging
+  | '/zaptec/current'         // Set current
+  | '/automation/status'      // Automation status
+  | '/automation/mode'        // Automation mode
   | '/automation/config';     // Configuration
 
 /**
- * Interface pour les requêtes de contrôle du chargeur
- * Utilisée pour envoyer des commandes au chargeur Zaptec
+ * Interface for charger control requests
+ * Used to send commands to the Zaptec charger
  */
 export interface ChargerControlRequest {
-  /** Action à effectuer */
+  /** Action to perform */
   action: 'start' | 'stop' | 'setCurrent' | 'setMode';
-  /** Valeur associée (ex: courant en ampères) */
+  /** Associated value (ex: current in amperes) */
   value?: number;
-  /** Paramètres additionnels */
+  /** Additional parameters */
   parameters?: Record<string, any>;
 }
 
 /**
- * Interface pour les requêtes de configuration de l'automatisation
- * Permet de modifier les paramètres du système d'automatisation
+ * Interface for automation configuration requests
+ * Allows modifying automation system parameters
  */
 export interface AutomationConfigRequest {
-  /** Mode d'automatisation */
+  /** Automation mode */
   mode: 'manual' | 'surplus' | 'scheduled';
-  /** Seuil de puissance pour démarrer la charge en Watts */
+  /** Power threshold to start charging in Watts */
   powerThreshold?: number;
-  /** Courant minimum de charge en Ampères */
+  /** Minimum charging current in Amperes */
   minimumCurrent?: number;
-  /** Courant maximum de charge en Ampères */
+  /** Maximum charging current in Amperes */
   maximumCurrent?: number;
-  /** Planning de charge (pour mode scheduled) */
+  /** Charging schedule (for scheduled mode) */
   schedule?: {
     startTime: string;
     endTime: string;

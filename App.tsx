@@ -1,37 +1,37 @@
 /**
- * APPLICATION PRINCIPALE
+ * MAIN APPLICATION
  * 
- * Ce fichier est le point d'entrée de votre application React Native.
- * Il configure l'application principale et lance le système de navigation.
+ * This file is the entry point of your React Native application.
+ * It configures the main application and launches the navigation system.
  * 
- * React Native fonctionne comme une SPA (Single Page Application) :
- * - Une seule "page" qui contient toute l'application
- * - La navigation change les composants affichés
- * - L'état est géré au niveau global ou local
+ * React Native works like a SPA (Single Page Application):
+ * - A single "page" that contains the entire application
+ * - Navigation changes the displayed components
+ * - State is managed at the global or local level
  */
 
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-// Import du navigateur principal
+// Import main navigator
 import { AppNavigator } from './src/navigation';
 
 /**
- * Composant App principal
+ * Main App component
  * 
- * C'est le composant racine de votre application.
- * Il enveloppe toute l'application et configure les providers globaux.
+ * This is the root component of your application.
+ * It wraps the entire application and configures global providers.
  */
 export default function App() {
   return (
     <SafeAreaProvider>
-      {/* SafeAreaProvider gère automatiquement les zones sûres (notch, barres système) */}
+      {/* SafeAreaProvider automatically manages safe areas (notch, system bars) */}
       
-      {/* AppNavigator contient toute la logique de navigation */}
+      {/* AppNavigator contains all navigation logic */}
       <AppNavigator />
       
-      {/* StatusBar configure l'apparence de la barre de statut */}
+      {/* StatusBar configures the status bar appearance */}
       <StatusBar style="auto" />
     </SafeAreaProvider>
   );

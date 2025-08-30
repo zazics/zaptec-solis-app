@@ -1,12 +1,12 @@
 /**
- * ÉCRAN SOLIS - Détails de l'onduleur solaire
+ * SOLIS SCREEN - Solar inverter details
  * 
- * Cet écran affiche toutes les données détaillées de votre onduleur Solis :
- * - Données des panneaux PV (strings 1 et 2)
- * - Données AC (sortie de l'onduleur)
- * - État de la batterie avec graphique visuel
- * - Flux énergétiques
- * - Historique de production (simulation)
+ * This screen displays all detailed data from your Solis inverter:
+ * - PV panel data (strings 1 and 2)
+ * - AC data (inverter output)
+ * - Battery status with visual chart
+ * - Energy flows
+ * - Production history (simulation)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -21,11 +21,11 @@ import {
   Dimensions,
 } from 'react-native';
 
-// Import des types et services
+// Import types and services
 import { SolisInverterData } from '../types';
 import { apiService } from '../services';
 
-// Récupération des dimensions de l'écran pour les graphiques
+// Get screen dimensions for charts
 const { width: screenWidth } = Dimensions.get('window');
 
 /**

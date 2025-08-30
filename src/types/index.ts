@@ -1,14 +1,14 @@
 /**
- * EXPORT PRINCIPAL DES TYPES
+ * MAIN TYPES EXPORT
  * 
- * Ce fichier centralise l'export de tous les types TypeScript
- * pour faciliter les imports dans le reste de l'application.
+ * This file centralizes the export of all TypeScript types
+ * to facilitate imports throughout the application.
  * 
  * Usage:
  * import { ZaptecStatus, SolisInverterData, ApiResponse } from '@/types';
  */
 
-// Export des types Zaptec
+// Export Zaptec types
 export type {
   ZaptecStatus,
   ZaptecStateObservation,
@@ -18,7 +18,7 @@ export type {
   ZaptecInstallationUpdateRequest,
 } from './zaptec.types';
 
-// Export des types Solis
+// Export Solis types
 export type {
   SolisPVData,
   SolisACData,
@@ -30,7 +30,7 @@ export type {
   SolisEnergyFlow,
 } from './solis.types';
 
-// Export des types API
+// Export API types
 export type {
   ApiResponse,
   ApiError,

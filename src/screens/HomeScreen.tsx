@@ -1,14 +1,14 @@
 /**
- * ÉCRAN D'ACCUEIL - Vue d'ensemble du système
+ * HOME SCREEN - System overview
  * 
- * Cet écran affiche un résumé de l'état de votre système :
- * - Production solaire actuelle
- * - État de la batterie
- * - État du chargeur
- * - Flux énergétique global
+ * This screen displays a summary of your system status:
+ * - Current solar production
+ * - Battery status
+ * - Charger status
+ * - Global energy flow
  * 
- * React Native utilise des composants comme View, Text, StyleSheet
- * qui sont l'équivalent de <div>, <p>, CSS en web.
+ * React Native uses components like View, Text, StyleSheet
+ * which are the equivalent of <div>, <p>, CSS on web.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -22,69 +22,69 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-// Import des types et services
+// Import types and services
 import { SolisInverterData, ZaptecStatus } from '../types';
 import { apiService } from '../services';
 
 /**
- * Composant HomeScreen
+ * HomeScreen Component
  * 
- * Composant fonctionnel React qui affiche la vue d'ensemble.
- * Utilise les hooks useState et useEffect pour gérer l'état local.
+ * React functional component that displays the overview.
+ * Uses useState and useEffect hooks to manage local state.
  */
 const HomeScreen: React.FC = () => {
   // ========================================
-  // ÉTAT LOCAL DU COMPOSANT
+  // COMPONENT LOCAL STATE
   // ========================================
   
-  // useState permet de stocker des données qui changent dans le composant
-  // Quand l'état change, React re-rend automatiquement le composant
+  // useState allows storing data that changes in the component
+  // When state changes, React automatically re-renders the component
   
   const [solisData, setSolisData] = useState<SolisInverterData | null>(null);
   const [zaptecStatus, setZaptecStatus] = useState<ZaptecStatus | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);    // Indicateur de chargement
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false); // Indicateur de rafraîchissement
+  const [isLoading, setIsLoading] = useState<boolean>(true);    // Loading indicator
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false); // Refresh indicator
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   // ========================================
-  // FONCTIONS UTILITAIRES
+  // UTILITY FUNCTIONS
   // ========================================
 
   /**
-   * Charge les données depuis l'API
-   * Fonction asynchrone qui récupère les données Solis et Zaptec
+   * Load data from the API
+   * Asynchronous function that retrieves Solis and Zaptec data
    */
   const loadData = async (): Promise<void> => {
     try {
-      // Promise.all permet d'exécuter plusieurs requêtes en parallèle
-      // Plus rapide que d'attendre chaque requête l'une après l'autre
+      // Promise.all allows executing multiple requests in parallel
+      // Faster than waiting for each request one after the other
       const [solis, zaptec] = await Promise.all([
         apiService.getSolisData(),
         apiService.getZaptecStatus(),
       ]);
 
-      // Mise à jour de l'état avec les données récupérées
+      // Update state with retrieved data
       setSolisData(solis);
       setZaptecStatus(zaptec);
       setLastUpdate(new Date());
     } catch (error) {
-      // Gestion d'erreur avec affichage d'une alerte native
-      console.error('Erreur lors du chargement des données:', error);
+      // Error handling with native alert display
+      console.error('Error loading data:', error);
       Alert.alert(
-        'Erreur de connexion',
-        'Impossible de récupérer les données. Vérifiez votre connexion.',
+        'Connection Error',
+        'Unable to retrieve data. Check your connection.',
         [{ text: 'OK' }]
       );
     } finally {
-      // finally s'exécute toujours, que la requête réussisse ou échoue
+      // finally always executes, whether the request succeeds or fails
       setIsLoading(false);
       setIsRefreshing(false);
     }
   };
 
   /**
-   * Gère le rafraîchissement manuel des données
-   * Appelée quand l'utilisateur tire vers le bas (pull-to-refresh)
+   * Handle manual data refresh
+   * Called when user pulls down (pull-to-refresh)
    */
   const handleRefresh = (): void => {
     setIsRefreshing(true);
@@ -92,8 +92,8 @@ const HomeScreen: React.FC = () => {
   };
 
   /**
-   * Calcule le surplus solaire
-   * Surplus = Production - Consommation
+   * Calculate solar surplus
+   * Surplus = Production - Consumption
    */
   const calculateSolarSurplus = (): number => {
     if (!solisData) return 0;
@@ -101,8 +101,8 @@ const HomeScreen: React.FC = () => {
   };
 
   /**
-   * Formate une puissance en Watts avec l'unité appropriée
-   * Convertit en kW si > 1000W
+   * Format power in Watts with appropriate unit
+   * Convert to kW if > 1000W
    */
   const formatPower = (watts: number): string => {
     if (Math.abs(watts) >= 1000) {
@@ -112,160 +112,160 @@ const HomeScreen: React.FC = () => {
   };
 
   /**
-   * Retourne une couleur basée sur une valeur numérique
-   * Vert pour positif, rouge pour négatif, gris pour zéro
+   * Return a color based on a numeric value
+   * Green for positive, red for negative, gray for zero
    */
   const getColorForValue = (value: number): string => {
-    if (value > 0) return '#34C759';  // Vert (couleur système iOS)
-    if (value < 0) return '#FF3B30';  // Rouge (couleur système iOS)
-    return '#8E8E93';                 // Gris (couleur système iOS)
+    if (value > 0) return '#34C759';  // Green (iOS system color)
+    if (value < 0) return '#FF3B30';  // Red (iOS system color)
+    return '#8E8E93';                 // Gray (iOS system color)
   };
 
   // ========================================
-  // EFFECTS (EFFETS DE BORD)
+  // EFFECTS (SIDE EFFECTS)
   // ========================================
 
   /**
-   * useEffect avec tableau de dépendances vide []
-   * S'exécute une seule fois au montage du composant (comme componentDidMount)
+   * useEffect with empty dependency array []
+   * Executes only once when component mounts (like componentDidMount)
    */
   useEffect(() => {
     loadData();
   }, []);
 
   /**
-   * useEffect avec intervalle pour mise à jour automatique
-   * Met à jour les données toutes les 30 secondes
+   * useEffect with interval for automatic updates
+   * Updates data every 30 seconds
    */
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isLoading && !isRefreshing) {
         loadData();
       }
-    }, 30000); // 30 secondes
+    }, 30000); // 30 seconds
 
-    // Cleanup function : nettoie l'intervalle quand le composant se démonte
+    // Cleanup function: cleans up interval when component unmounts
     return () => clearInterval(interval);
   }, [isLoading, isRefreshing]);
 
   // ========================================
-  // RENDU CONDITIONNEL
+  // CONDITIONAL RENDERING
   // ========================================
 
-  // Affiche un indicateur de chargement pendant le chargement initial
+  // Display loading indicator during initial loading
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Chargement des données...</Text>
+        <Text style={styles.loadingText}>Loading data...</Text>
       </View>
     );
   }
 
   // ========================================
-  // RENDU PRINCIPAL
+  // MAIN RENDER
   // ========================================
 
   return (
     <ScrollView
       style={styles.container}
-      // RefreshControl ajoute la fonctionnalité "tirer pour rafraîchir"
+      // RefreshControl adds "pull to refresh" functionality
       refreshControl={
         <RefreshControl
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
-          tintColor="#007AFF"  // Couleur de l'indicateur de rafraîchissement
+          tintColor="#007AFF"  // Refresh indicator color
         />
       }
     >
-      {/* En-tête avec titre et dernière mise à jour */}
+      {/* Header with title and last update */}
       <View style={styles.header}>
-        <Text style={styles.title}>Système Zaptec-Solis</Text>
+        <Text style={styles.title}>Zaptec-Solis System</Text>
         {lastUpdate && (
           <Text style={styles.lastUpdate}>
-            Dernière MAJ : {lastUpdate.toLocaleTimeString('fr-FR')}
+            Last Update: {lastUpdate.toLocaleTimeString('en-US')}
           </Text>
         )}
       </View>
 
-      {/* Section Production Solaire */}
+      {/* Solar Production Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>⚡ Production Solaire</Text>
+        <Text style={styles.sectionTitle}>⚡ Solar Production</Text>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Production totale :</Text>
+          <Text style={styles.dataLabel}>Total production:</Text>
           <Text style={[styles.dataValue, { color: getColorForValue(solisData?.pv.totalPowerDC || 0) }]}>
             {formatPower(solisData?.pv.totalPowerDC || 0)}
           </Text>
         </View>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Consommation maison :</Text>
+          <Text style={styles.dataLabel}>House consumption:</Text>
           <Text style={styles.dataValue}>
             {formatPower(solisData?.house.consumption || 0)}
           </Text>
         </View>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Surplus disponible :</Text>
+          <Text style={styles.dataLabel}>Available surplus:</Text>
           <Text style={[styles.dataValue, { color: getColorForValue(calculateSolarSurplus()) }]}>
             {formatPower(calculateSolarSurplus())}
           </Text>
         </View>
       </View>
 
-      {/* Section Batterie */}
+      {/* Battery Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🔋 Batterie</Text>
+        <Text style={styles.sectionTitle}>🔋 Battery</Text>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Niveau de charge :</Text>
+          <Text style={styles.dataLabel}>Charge level:</Text>
           <Text style={styles.dataValue}>
             {solisData?.battery.soc || 0}%
           </Text>
         </View>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Puissance batterie :</Text>
+          <Text style={styles.dataLabel}>Battery power:</Text>
           <Text style={[styles.dataValue, { color: getColorForValue(solisData?.battery.power || 0) }]}>
             {formatPower(solisData?.battery.power || 0)}
           </Text>
         </View>
       </View>
 
-      {/* Section Chargeur */}
+      {/* Charger Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🚗 Chargeur Zaptec</Text>
+        <Text style={styles.sectionTitle}>🚗 Zaptec Charger</Text>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>État :</Text>
+          <Text style={styles.dataLabel}>Status:</Text>
           <Text style={[styles.dataValue, { color: zaptecStatus?.online ? '#34C759' : '#FF3B30' }]}>
-            {zaptecStatus?.online ? 'En ligne' : 'Hors ligne'}
+            {zaptecStatus?.online ? 'Online' : 'Offline'}
           </Text>
         </View>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Charge en cours :</Text>
+          <Text style={styles.dataLabel}>Charging in progress:</Text>
           <Text style={[styles.dataValue, { color: zaptecStatus?.charging ? '#34C759' : '#8E8E93' }]}>
-            {zaptecStatus?.charging ? 'Oui' : 'Non'}
+            {zaptecStatus?.charging ? 'Yes' : 'No'}
           </Text>
         </View>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Puissance de charge :</Text>
+          <Text style={styles.dataLabel}>Charging power:</Text>
           <Text style={styles.dataValue}>
             {formatPower(zaptecStatus?.power || 0)}
           </Text>
         </View>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Véhicule connecté :</Text>
+          <Text style={styles.dataLabel}>Vehicle connected:</Text>
           <Text style={styles.dataValue}>
-            {zaptecStatus?.vehicleConnected ? 'Oui' : 'Non'}
+            {zaptecStatus?.vehicleConnected ? 'Yes' : 'No'}
           </Text>
         </View>
       </View>
 
-      {/* Section Réseau */}
+      {/* Grid Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🏠 Réseau électrique</Text>
+        <Text style={styles.sectionTitle}>🏠 Electrical Grid</Text>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Échange réseau :</Text>
+          <Text style={styles.dataLabel}>Grid exchange:</Text>
           <Text style={[styles.dataValue, { color: getColorForValue(solisData?.grid.activePower || 0) }]}>
             {formatPower(solisData?.grid.activePower || 0)}
             <Text style={styles.unitExplanation}>
-              {(solisData?.grid.activePower || 0) > 0 ? ' (injection)' : ' (soutirage)'}
+              {(solisData?.grid.activePower || 0) > 0 ? ' (injection)' : ' (consumption)'}
             </Text>
           </Text>
         </View>
@@ -279,19 +279,19 @@ const HomeScreen: React.FC = () => {
 // ========================================
 
 /**
- * StyleSheet de React Native
- * Similaire au CSS mais avec une syntaxe JavaScript
- * Les propriétés utilisent camelCase (backgroundColor au lieu de background-color)
+ * React Native StyleSheet
+ * Similar to CSS but with JavaScript syntax
+ * Properties use camelCase (backgroundColor instead of background-color)
  */
 const styles = StyleSheet.create({
   container: {
-    flex: 1,                    // Prend tout l'espace disponible
-    backgroundColor: '#F2F2F7', // Couleur de fond (gris clair iOS)
+    flex: 1,                    // Takes all available space
+    backgroundColor: '#F2F2F7', // Background color (iOS light gray)
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',   // Centre verticalement
-    alignItems: 'center',       // Centre horizontalement
+    justifyContent: 'center',   // Center vertically
+    alignItems: 'center',       // Center horizontally
     backgroundColor: '#F2F2F7',
   },
   loadingText: {
@@ -321,16 +321,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     marginTop: 20,
     marginHorizontal: 16,
-    borderRadius: 12,           // Coins arrondis
+    borderRadius: 12,           // Rounded corners
     padding: 16,
-    shadowColor: '#000000',     // Ombre (iOS)
+    shadowColor: '#000000',     // Shadow (iOS)
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,               // Ombre (Android)
+    elevation: 3,               // Shadow (Android)
   },
   sectionTitle: {
     fontSize: 18,
@@ -339,15 +339,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   dataRow: {
-    flexDirection: 'row',       // Disposition horizontale
-    justifyContent: 'space-between', // Espace entre les éléments
+    flexDirection: 'row',       // Horizontal layout
+    justifyContent: 'space-between', // Space between elements
     alignItems: 'center',
     paddingVertical: 8,
   },
   dataLabel: {
     fontSize: 16,
     color: '#3C3C43',
-    flex: 1,                    // Prend l'espace disponible
+    flex: 1,                    // Takes available space
   },
   dataValue: {
     fontSize: 16,

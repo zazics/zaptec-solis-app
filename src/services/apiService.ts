@@ -1,11 +1,11 @@
 /**
- * SERVICE API - Communication avec votre serveur Node.js
+ * API SERVICE - Communication with your Node.js server
  * 
- * Ce service centralise toutes les communications avec votre API Node.js.
- * Il utilise Axios pour les requêtes HTTP et gère les erreurs automatiquement.
+ * This service centralizes all communications with your Node.js API.
+ * It uses Axios for HTTP requests and handles errors automatically.
  * 
- * Axios est une bibliothèque populaire pour les requêtes HTTP, plus simple
- * que fetch() et avec de meilleures fonctionnalités (interceptors, timeout, etc.)
+ * Axios is a popular library for HTTP requests, simpler
+ * than fetch() and with better features (interceptors, timeout, etc.)
  */
 
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
@@ -21,61 +21,61 @@ import {
 } from '../types';
 
 /**
- * Classe ApiService
+ * ApiService Class
  * 
- * Cette classe encapsule toutes les communications avec votre serveur Node.js.
- * Elle fournit des méthodes typées pour chaque endpoint de votre API.
+ * This class encapsulates all communications with your Node.js server.
+ * It provides typed methods for each endpoint of your API.
  */
 class ApiService {
   private axiosInstance: AxiosInstance;
   private config: ApiConfig;
 
   /**
-   * Constructeur du service API
+   * API service constructor
    * 
-   * @param config Configuration de l'API (URL, timeout, etc.)
+   * @param config API configuration (URL, timeout, etc.)
    */
   constructor(config: ApiConfig) {
     this.config = config;
     
-    // Création de l'instance Axios avec configuration personnalisée
+    // Create Axios instance with custom configuration
     this.axiosInstance = axios.create({
-      baseURL: config.baseUrl,           // URL de base de votre API (ex: http://192.168.1.100:3000)
-      timeout: config.timeout || 10000,  // Timeout de 10 secondes par défaut
+      baseURL: config.baseUrl,           // Base URL of your API (ex: http://192.168.1.100:3000)
+      timeout: config.timeout || 10000,  // 10 second timeout by default
       headers: {
-        'Content-Type': 'application/json',  // Type de contenu JSON
-        ...(config.authToken && {           // Ajout du token d'authentification si présent
+        'Content-Type': 'application/json',  // JSON content type
+        ...(config.authToken && {           // Add authentication token if present
           'Authorization': `Bearer ${config.authToken}`
         }),
       },
     });
 
-    // Configuration des interceptors pour gérer les réponses et erreurs
+    // Configure interceptors to handle responses and errors
     this.setupInterceptors();
   }
 
   /**
-   * Configuration des interceptors Axios
+   * Configure Axios interceptors
    * 
-   * Les interceptors permettent de traiter automatiquement toutes les
-   * réponses et erreurs avant qu'elles n'arrivent dans votre code.
+   * Interceptors allow automatic processing of all
+   * responses and errors before they reach your code.
    */
   private setupInterceptors(): void {
-    // Interceptor pour les réponses réussies
+    // Interceptor for successful responses
     this.axiosInstance.interceptors.response.use(
       (response: AxiosResponse) => {
-        // Log de la réponse pour le débogage (à supprimer en production)
+        // Log response for debugging (remove in production)
         console.log(`API Response [${response.config.method?.toUpperCase()} ${response.config.url}]:`, response.data);
         return response;
       },
       (error) => {
-        // Gestion centralisée des erreurs
+        // Centralized error handling
         console.error('API Error:', error);
         
-        // Transformation de l'erreur en format standardisé
+        // Transform error to standardized format
         const apiError: ApiError = {
           status: error.response?.status || 0,
-          message: error.response?.data?.message || error.message || 'Erreur de communication',
+          message: error.response?.data?.message || error.message || 'Communication error',
           error: error.response?.data?.error,
           timestamp: new Date().toISOString(),
         };
@@ -86,10 +86,10 @@ class ApiService {
   }
 
   /**
-   * Méthode générique pour les requêtes GET
+   * Generic method for GET requests
    * 
-   * @param endpoint Endpoint de l'API (ex: '/solis/status')
-   * @returns Promise avec la réponse typée
+   * @param endpoint API endpoint (ex: '/solis/status')
+   * @returns Promise with typed response
    */
   private async get<T>(endpoint: string): Promise<ApiResponse<T>> {
     const response = await this.axiosInstance.get<ApiResponse<T>>(endpoint);
@@ -97,11 +97,11 @@ class ApiService {
   }
 
   /**
-   * Méthode générique pour les requêtes POST
+   * Generic method for POST requests
    * 
-   * @param endpoint Endpoint de l'API
-   * @param data Données à envoyer dans le body
-   * @returns Promise avec la réponse typée
+   * @param endpoint API endpoint
+   * @param data Data to send in the body
+   * @returns Promise with typed response
    */
   private async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
     const response = await this.axiosInstance.post<ApiResponse<T>>(endpoint, data);
@@ -109,13 +109,13 @@ class ApiService {
   }
 
   // ========================================
-  // MÉTHODES POUR L'API SOLIS (ONDULEUR SOLAIRE)
+  // SOLIS API METHODS (SOLAR INVERTER)
   // ========================================
 
   /**
-   * Récupère les données complètes de l'onduleur Solis
+   * Retrieve complete Solis inverter data
    * 
-   * @returns Données de l'onduleur avec production solaire, batterie, réseau, etc.
+   * @returns Inverter data with solar production, battery, grid, etc.
    */
   async getSolisData(): Promise<SolisInverterData> {
     const response = await this.get<SolisInverterData>('/solis/data');
@@ -123,9 +123,9 @@ class ApiService {
   }
 
   /**
-   * Récupère uniquement le statut de l'onduleur Solis
+   * Retrieve only Solis inverter status
    * 
-   * @returns Statut simplifié de l'onduleur
+   * @returns Simplified inverter status
    */
   async getSolisStatus(): Promise<{ status: string; online: boolean }> {
     const response = await this.get<{ status: string; online: boolean }>('/solis/status');
@@ -133,13 +133,13 @@ class ApiService {
   }
 
   // ========================================
-  // MÉTHODES POUR L'API ZAPTEC (CHARGEUR)
+  // ZAPTEC API METHODS (CHARGER)
   // ========================================
 
   /**
-   * Récupère le statut du chargeur Zaptec
+   * Retrieve Zaptec charger status
    * 
-   * @returns Statut du chargeur (en ligne, en charge, puissance, etc.)
+   * @returns Charger status (online, charging, power, etc.)
    */
   async getZaptecStatus(): Promise<ZaptecStatus> {
     const response = await this.get<ZaptecStatus>('/zaptec/status');
@@ -147,9 +147,9 @@ class ApiService {
   }
 
   /**
-   * Récupère les informations détaillées du chargeur
+   * Retrieve detailed charger information
    * 
-   * @returns Informations complètes du chargeur
+   * @returns Complete charger information
    */
   async getZaptecInfo(): Promise<ZaptecChargerInfo> {
     const response = await this.get<ZaptecChargerInfo>('/zaptec/info');
@@ -157,51 +157,51 @@ class ApiService {
   }
 
   /**
-   * Démarre la charge du véhicule
+   * Start vehicle charging
    * 
-   * @returns Confirmation du démarrage
+   * @returns Start confirmation
    */
   async startCharging(): Promise<ApiResponse> {
     return await this.post('/zaptec/start');
   }
 
   /**
-   * Arrête la charge du véhicule
+   * Stop vehicle charging
    * 
-   * @returns Confirmation de l'arrêt
+   * @returns Stop confirmation
    */
   async stopCharging(): Promise<ApiResponse> {
     return await this.post('/zaptec/stop');
   }
 
   /**
-   * Modifie le courant de charge
+   * Modify charging current
    * 
-   * @param current Courant en ampères (6-16A généralement)
-   * @returns Confirmation du changement
+   * @param current Current in amperes (6-16A generally)
+   * @returns Change confirmation
    */
   async setChargingCurrent(current: number): Promise<ApiResponse> {
     return await this.post('/zaptec/current', { current });
   }
 
   /**
-   * Contrôle général du chargeur
+   * General charger control
    * 
-   * @param request Requête de contrôle (start, stop, setCurrent, etc.)
-   * @returns Confirmation de la commande
+   * @param request Control request (start, stop, setCurrent, etc.)
+   * @returns Command confirmation
    */
   async controlCharger(request: ChargerControlRequest): Promise<ApiResponse> {
     return await this.post('/zaptec/control', request);
   }
 
   // ========================================
-  // MÉTHODES POUR L'AUTOMATISATION
+  // AUTOMATION METHODS
   // ========================================
 
   /**
-   * Récupère l'état du système d'automatisation
+   * Retrieve automation system status
    * 
-   * @returns État de l'automatisation (mode, configuration, etc.)
+   * @returns Automation status (mode, configuration, etc.)
    */
   async getAutomationStatus(): Promise<{ mode: string; enabled: boolean; lastUpdate: string }> {
     const response = await this.get<{ mode: string; enabled: boolean; lastUpdate: string }>('/automation/status');
@@ -209,33 +209,33 @@ class ApiService {
   }
 
   /**
-   * Change le mode d'automatisation
+   * Change automation mode
    * 
-   * @param mode Mode à activer ('manual', 'surplus', 'scheduled')
-   * @returns Confirmation du changement
+   * @param mode Mode to activate ('manual', 'surplus', 'scheduled')
+   * @returns Change confirmation
    */
   async setAutomationMode(mode: 'manual' | 'surplus' | 'scheduled'): Promise<ApiResponse> {
     return await this.post('/automation/mode', { mode });
   }
 
   /**
-   * Configure les paramètres d'automatisation
+   * Configure automation parameters
    * 
-   * @param config Configuration à appliquer
-   * @returns Confirmation de la configuration
+   * @param config Configuration to apply
+   * @returns Configuration confirmation
    */
   async configureAutomation(config: AutomationConfigRequest): Promise<ApiResponse> {
     return await this.post('/automation/config', config);
   }
 
   // ========================================
-  // MÉTHODES UTILITAIRES
+  // UTILITY METHODS
   // ========================================
 
   /**
-   * Teste la connectivité avec l'API
+   * Test connectivity with the API
    * 
-   * @returns État de la connexion
+   * @returns Connection status
    */
   async testConnection(): Promise<boolean> {
     try {
@@ -248,16 +248,16 @@ class ApiService {
   }
 
   /**
-   * Met à jour la configuration de l'API
+   * Update API configuration
    * 
-   * @param newConfig Nouvelle configuration
+   * @param newConfig New configuration
    */
   updateConfig(newConfig: ApiConfig): void {
     this.config = newConfig;
     this.axiosInstance.defaults.baseURL = newConfig.baseUrl;
     this.axiosInstance.defaults.timeout = newConfig.timeout || 10000;
     
-    // Mise à jour de l'en-tête d'authentification
+    // Update authentication header
     if (newConfig.authToken) {
       this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newConfig.authToken}`;
     } else {
@@ -266,9 +266,9 @@ class ApiService {
   }
 
   /**
-   * Récupère la configuration actuelle
+   * Get current configuration
    * 
-   * @returns Configuration actuelle de l'API
+   * @returns Current API configuration
    */
   getConfig(): ApiConfig {
     return { ...this.config };
@@ -276,18 +276,18 @@ class ApiService {
 }
 
 // ========================================
-// INSTANCE SINGLETON ET EXPORT
+// SINGLETON INSTANCE AND EXPORT
 // ========================================
 
-// Configuration par défaut (vous devrez la modifier selon votre environnement)
+// Default configuration (you should modify it according to your environment)
 const defaultConfig: ApiConfig = {
-  baseUrl: 'http://192.168.1.100:3000',  // Remplacez par l'IP de votre Raspberry Pi
-  timeout: 10000,                        // 10 secondes de timeout
-  useHttps: false,                       // Changez à true si vous utilisez HTTPS
+  baseUrl: 'http://192.168.1.100:3000',  // Replace with your Raspberry Pi IP
+  timeout: 10000,                        // 10 second timeout
+  useHttps: false,                       // Change to true if you use HTTPS
 };
 
-// Instance singleton du service API
-// En utilisant une instance unique, vous partagez la configuration dans toute l'app
+// API service singleton instance
+// By using a single instance, you share configuration throughout the app
 const apiService = new ApiService(defaultConfig);
 
 export default apiService;

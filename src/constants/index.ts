@@ -1,12 +1,12 @@
 /**
- * CONSTANTES DE L'APPLICATION
+ * APPLICATION CONSTANTS
  * 
- * Ce fichier contient toutes les constantes utilisées dans l'application
- * pour éviter les valeurs magiques et centraliser la configuration.
+ * This file contains all constants used in the application
+ * to avoid magic values and centralize configuration.
  */
 
 /**
- * Configuration de l'API par défaut
+ * Default API configuration
  */
 export const DEFAULT_API_CONFIG = {
   BASE_URL: 'http://192.168.1.100:3000',
@@ -16,43 +16,43 @@ export const DEFAULT_API_CONFIG = {
 } as const;
 
 /**
- * Intervalles de rafraîchissement (en millisecondes)
+ * Refresh intervals (in milliseconds)
  */
 export const REFRESH_INTERVALS = {
-  FAST: 5000,     // 5 secondes
-  NORMAL: 15000,  // 15 secondes
-  SLOW: 30000,    // 30 secondes
+  FAST: 5000,     // 5 seconds
+  NORMAL: 15000,  // 15 seconds
+  SLOW: 30000,    // 30 seconds
   VERY_SLOW: 60000, // 1 minute
 } as const;
 
 /**
- * Couleurs de l'application
- * Basées sur les couleurs système iOS pour une cohérence visuelle
+ * Application colors
+ * Based on iOS system colors for visual consistency
  */
 export const COLORS = {
-  // Couleurs principales
-  PRIMARY: '#007AFF',      // Bleu iOS
-  SUCCESS: '#34C759',      // Vert iOS
-  WARNING: '#FF9500',      // Orange iOS
-  DANGER: '#FF3B30',       // Rouge iOS
+  // Primary colors
+  PRIMARY: '#007AFF',      // iOS Blue
+  SUCCESS: '#34C759',      // iOS Green
+  WARNING: '#FF9500',      // iOS Orange
+  DANGER: '#FF3B30',       // iOS Red
   
-  // Couleurs de fond
-  BACKGROUND: '#F2F2F7',   // Fond principal
-  CARD_BACKGROUND: '#FFFFFF', // Fond des cartes
+  // Background colors
+  BACKGROUND: '#F2F2F7',   // Main background
+  CARD_BACKGROUND: '#FFFFFF', // Card background
   MODAL_OVERLAY: 'rgba(0, 0, 0, 0.5)',
   
-  // Couleurs de texte
+  // Text colors
   TEXT_PRIMARY: '#000000',
   TEXT_SECONDARY: '#3C3C43',
   TEXT_TERTIARY: '#8E8E93',
   
-  // Couleurs de bordure
+  // Border colors
   BORDER_LIGHT: '#E5E5EA',
   BORDER_MEDIUM: '#C7C7CC',
 } as const;
 
 /**
- * Tailles de polices
+ * Font sizes
  */
 export const FONT_SIZES = {
   SMALL: 12,
@@ -64,7 +64,7 @@ export const FONT_SIZES = {
 } as const;
 
 /**
- * Espacements
+ * Spacing
  */
 export const SPACING = {
   XS: 4,
@@ -76,39 +76,39 @@ export const SPACING = {
 } as const;
 
 /**
- * Limites et seuils
+ * Limits and thresholds
  */
 export const LIMITS = {
-  // Chargeur Zaptec
-  MIN_CHARGING_CURRENT: 6,    // Ampères
-  MAX_CHARGING_CURRENT: 16,   // Ampères
+  // Zaptec charger
+  MIN_CHARGING_CURRENT: 6,    // Amperes
+  MAX_CHARGING_CURRENT: 16,   // Amperes
   
-  // Batterie
+  // Battery
   BATTERY_LOW_THRESHOLD: 20,  // %
   BATTERY_HIGH_THRESHOLD: 80, // %
   
-  // Température onduleur
+  // Inverter temperature
   TEMP_WARNING_THRESHOLD: 40, // °C
   TEMP_DANGER_THRESHOLD: 60,  // °C
   
-  // Puissance
-  POWER_THRESHOLD_KW: 1,      // kW (pour conversion W -> kW)
+  // Power
+  POWER_THRESHOLD_KW: 1,      // kW (for W -> kW conversion)
 } as const;
 
 /**
- * Messages d'erreur standardisés
+ * Standardized error messages
  */
 export const ERROR_MESSAGES = {
-  NETWORK_ERROR: 'Erreur de réseau. Vérifiez votre connexion.',
-  API_ERROR: 'Erreur de communication avec le serveur.',
-  INVALID_INPUT: 'Valeur saisie invalide.',
-  PERMISSION_DENIED: 'Permissions insuffisantes.',
-  TIMEOUT_ERROR: 'La requête a expiré.',
-  UNKNOWN_ERROR: 'Une erreur inattendue s\'est produite.',
+  NETWORK_ERROR: 'Network error. Check your connection.',
+  API_ERROR: 'Communication error with server.',
+  INVALID_INPUT: 'Invalid input value.',
+  PERMISSION_DENIED: 'Insufficient permissions.',
+  TIMEOUT_ERROR: 'Request timed out.',
+  UNKNOWN_ERROR: 'An unexpected error occurred.',
 } as const;
 
 /**
- * Clés de stockage local
+ * Local storage keys
  */
 export const STORAGE_KEYS = {
   SETTINGS: '@ZaptecSolisApp:settings',
@@ -117,7 +117,7 @@ export const STORAGE_KEYS = {
 } as const;
 
 /**
- * Types d'événements pour les logs
+ * Event types for logging
  */
 export const LOG_EVENTS = {
   APP_START: 'app_start',
