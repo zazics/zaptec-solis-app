@@ -48,6 +48,8 @@ export interface ApiConfig {
   authToken?: string;
   /** Indicates if requests should use HTTPS */
   useHttps?: boolean;
+  /** Simulation mode enabled (forces localhost) */
+  simulationMode?: boolean;
 }
 
 /**
@@ -67,6 +69,8 @@ export interface AppSettings {
   units: 'metric' | 'imperial';
   /** Interface language */
   language: 'fr' | 'en';
+  /** Simulation mode enabled */
+  simulationMode: boolean;
 }
 
 /**

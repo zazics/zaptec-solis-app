@@ -31,7 +31,7 @@ class ApiService {
 
     // Create Axios instance with custom configuration
     this.axiosInstance = axios.create({
-      baseURL: config.baseUrl, // Base URL of your API (ex: http://192.168.1.100:3000)
+      baseURL: config.baseUrl, // Base URL already configured for simulation mode
       timeout: config.timeout || 10000, // 10 second timeout by default
       headers: {
         "Content-Type": "application/json", // JSON content type
@@ -83,8 +83,8 @@ class ApiService {
    * @param endpoint API endpoint (ex: '/solis/status')
    * @returns Promise with typed response
    */
-  private async get<T>(endpoint: string): Promise<ApiResponse<T>> {
-    const response = await this.axiosInstance.get<ApiResponse<T>>(endpoint);
+  private async get<T>(endpoint: string): Promise<T> {
+    const response = await this.axiosInstance.get<T>(endpoint);
     return response.data;
   }
 
@@ -95,8 +95,8 @@ class ApiService {
    * @param data Data to send in the body
    * @returns Promise with typed response
    */
-  private async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
-    const response = await this.axiosInstance.post<ApiResponse<T>>(endpoint, data);
+  private async post<T>(endpoint: string, data?: any): Promise<T> {
+    const response = await this.axiosInstance.post<T>(endpoint, data);
     return response.data;
   }
 
@@ -111,7 +111,7 @@ class ApiService {
    */
   async getSolisData(): Promise<SolisInverterData> {
     const response = await this.get<SolisInverterData>("/solis/all");
-    return response.data!;
+    return response;
   }
 
   /**
@@ -121,7 +121,7 @@ class ApiService {
    */
   async getSolisStatus(): Promise<{ code: number; text: string }> {
     const response = await this.get<{ code: number; text: string }>("/solis/status");
-    return response.data!;
+    return response;
   }
 
   // ========================================
@@ -135,7 +135,7 @@ class ApiService {
    */
   async getZaptecStatus(): Promise<ZaptecStatus> {
     const response = await this.get<ZaptecStatus>("/zaptec/status");
-    return response.data!;
+    return response;
   }
 
   // ========================================
@@ -149,7 +149,7 @@ class ApiService {
    */
   async getAutomationStatus(): Promise<{ mode: string; enabled: boolean; lastUpdate: string }> {
     const response = await this.get<{ mode: string; enabled: boolean; lastUpdate: string }>("/automation/status");
-    return response.data!;
+    return response;
   }
 
   /**
@@ -216,6 +216,7 @@ class ApiService {
    */
   updateConfig(newConfig: ApiConfig): void {
     this.config = newConfig;
+
     this.axiosInstance.defaults.baseURL = newConfig.baseUrl;
     this.axiosInstance.defaults.timeout = newConfig.timeout || 10000;
 
@@ -241,13 +242,15 @@ class ApiService {
 // SINGLETON INSTANCE AND EXPORT
 // ========================================
 
-import { API_BASE_URL, API_TIMEOUT, API_USE_HTTPS } from "@env";
+import { API_BASE_URL, API_TIMEOUT, API_USE_HTTPS, SIMULATION_MODE } from "@env";
 
 // Default configuration (loaded from environment variables)
+const simulationMode = SIMULATION_MODE === "true" || false;
 const defaultConfig: ApiConfig = {
-  baseUrl: API_BASE_URL || "http://192.168.1.100:3000", // IP from .env file
+  baseUrl: simulationMode ? "http://localhost:3000" : (API_BASE_URL || "http://192.168.1.100:3000"), // Force localhost if simulation mode
   timeout: parseInt(API_TIMEOUT) || 10000, // Timeout from .env file
-  useHttps: API_USE_HTTPS === "true" || false // HTTPS setting from .env file
+  useHttps: API_USE_HTTPS === "true" || false, // HTTPS setting from .env file
+  simulationMode: simulationMode // Simulation mode from .env file
 };
 
 // API service singleton instance

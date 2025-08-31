@@ -1,34 +1,26 @@
 /**
  * HOME SCREEN - System overview
- * 
+ *
  * This screen displays a summary of your system status:
  * - Current solar production
  * - Battery status
  * - Charger status
  * - Global energy flow
- * 
+ *
  * React Native uses components like View, Text, StyleSheet
  * which are the equivalent of <div>, <p>, CSS on web.
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, ActivityIndicator } from "react-native";
 
 // Import types and services
-import { SolisInverterData, ZaptecStatus } from '../types';
-import { apiService } from '../services';
+import { SolisInverterData, ZaptecStatus } from "../types";
+import { apiService } from "../services";
 
 /**
  * HomeScreen Component
- * 
+ *
  * React functional component that displays the overview.
  * Uses useState and useEffect hooks to manage local state.
  */
@@ -36,13 +28,13 @@ const HomeScreen: React.FC = () => {
   // ========================================
   // COMPONENT LOCAL STATE
   // ========================================
-  
+
   // useState allows storing data that changes in the component
   // When state changes, React automatically re-renders the component
-  
+
   const [solisData, setSolisData] = useState<SolisInverterData | null>(null);
   const [zaptecStatus, setZaptecStatus] = useState<ZaptecStatus | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);    // Loading indicator
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Loading indicator
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false); // Refresh indicator
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
@@ -58,10 +50,7 @@ const HomeScreen: React.FC = () => {
     try {
       // Promise.all allows executing multiple requests in parallel
       // Faster than waiting for each request one after the other
-      const [solis, zaptec] = await Promise.all([
-        apiService.getSolisData(),
-        apiService.getZaptecStatus(),
-      ]);
+      const [solis, zaptec] = await Promise.all([apiService.getSolisData(), apiService.getZaptecStatus()]);
 
       // Update state with retrieved data
       setSolisData(solis);
@@ -69,12 +58,8 @@ const HomeScreen: React.FC = () => {
       setLastUpdate(new Date());
     } catch (error) {
       // Error handling with native alert display
-      console.error('Error loading data:', error);
-      Alert.alert(
-        'Connection Error',
-        'Unable to retrieve data. Check your connection.',
-        [{ text: 'OK' }]
-      );
+      console.error("Error loading data:", error);
+      Alert.alert("Connection Error", "Unable to retrieve data. Check your connection.", [{ text: "OK" }]);
     } finally {
       // finally always executes, whether the request succeeds or fails
       setIsLoading(false);
@@ -116,9 +101,9 @@ const HomeScreen: React.FC = () => {
    * Green for positive, red for negative, gray for zero
    */
   const getColorForValue = (value: number): string => {
-    if (value > 0) return '#34C759';  // Green (iOS system color)
-    if (value < 0) return '#FF3B30';  // Red (iOS system color)
-    return '#8E8E93';                 // Gray (iOS system color)
+    if (value > 0) return "#34C759"; // Green (iOS system color)
+    if (value < 0) return "#FF3B30"; // Red (iOS system color)
+    return "#8E8E93"; // Gray (iOS system color)
   };
 
   // ========================================
@@ -174,18 +159,14 @@ const HomeScreen: React.FC = () => {
         <RefreshControl
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
-          tintColor="#007AFF"  // Refresh indicator color
+          tintColor="#007AFF" // Refresh indicator color
         />
       }
     >
       {/* Header with title and last update */}
       <View style={styles.header}>
         <Text style={styles.title}>Zaptec-Solis System</Text>
-        {lastUpdate && (
-          <Text style={styles.lastUpdate}>
-            Last Update: {lastUpdate.toLocaleTimeString('en-US')}
-          </Text>
-        )}
+        {lastUpdate && <Text style={styles.lastUpdate}>Last Update: {lastUpdate.toLocaleTimeString("en-US")}</Text>}
       </View>
 
       {/* Solar Production Section */}
@@ -193,21 +174,15 @@ const HomeScreen: React.FC = () => {
         <Text style={styles.sectionTitle}>⚡ Solar Production</Text>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Total production:</Text>
-          <Text style={[styles.dataValue, { color: getColorForValue(solisData?.pv.totalPowerDC || 0) }]}>
-            {formatPower(solisData?.pv.totalPowerDC || 0)}
-          </Text>
+          <Text style={[styles.dataValue, { color: getColorForValue(solisData?.pv.totalPowerDC || 0) }]}>{formatPower(solisData?.pv.totalPowerDC || 0)}</Text>
         </View>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>House consumption:</Text>
-          <Text style={styles.dataValue}>
-            {formatPower(solisData?.house.consumption || 0)}
-          </Text>
+          <Text style={styles.dataValue}>{formatPower(solisData?.house.consumption || 0)}</Text>
         </View>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Available surplus:</Text>
-          <Text style={[styles.dataValue, { color: getColorForValue(calculateSolarSurplus()) }]}>
-            {formatPower(calculateSolarSurplus())}
-          </Text>
+          <Text style={[styles.dataValue, { color: getColorForValue(calculateSolarSurplus()) }]}>{formatPower(calculateSolarSurplus())}</Text>
         </View>
       </View>
 
@@ -216,15 +191,11 @@ const HomeScreen: React.FC = () => {
         <Text style={styles.sectionTitle}>🔋 Battery</Text>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Charge level:</Text>
-          <Text style={styles.dataValue}>
-            {solisData?.battery.soc || 0}%
-          </Text>
+          <Text style={styles.dataValue}>{solisData?.battery.soc || 0}%</Text>
         </View>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Battery power:</Text>
-          <Text style={[styles.dataValue, { color: getColorForValue(solisData?.battery.power || 0) }]}>
-            {formatPower(solisData?.battery.power || 0)}
-          </Text>
+          <Text style={[styles.dataValue, { color: getColorForValue(solisData?.battery.power || 0) }]}>{formatPower(solisData?.battery.power || 0)}</Text>
         </View>
       </View>
 
@@ -233,27 +204,19 @@ const HomeScreen: React.FC = () => {
         <Text style={styles.sectionTitle}>🚗 Zaptec Charger</Text>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Status:</Text>
-          <Text style={[styles.dataValue, { color: zaptecStatus?.online ? '#34C759' : '#FF3B30' }]}>
-            {zaptecStatus?.online ? 'Online' : 'Offline'}
-          </Text>
+          <Text style={[styles.dataValue, { color: zaptecStatus?.online ? "#34C759" : "#FF3B30" }]}>{zaptecStatus?.online ? "Online" : "Offline"}</Text>
         </View>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Charging in progress:</Text>
-          <Text style={[styles.dataValue, { color: zaptecStatus?.charging ? '#34C759' : '#8E8E93' }]}>
-            {zaptecStatus?.charging ? 'Yes' : 'No'}
-          </Text>
+          <Text style={[styles.dataValue, { color: zaptecStatus?.charging ? "#34C759" : "#8E8E93" }]}>{zaptecStatus?.charging ? "Yes" : "No"}</Text>
         </View>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Charging power:</Text>
-          <Text style={styles.dataValue}>
-            {formatPower(zaptecStatus?.power || 0)}
-          </Text>
+          <Text style={styles.dataValue}>{formatPower(zaptecStatus?.power || 0)}</Text>
         </View>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Vehicle connected:</Text>
-          <Text style={styles.dataValue}>
-            {zaptecStatus?.vehicleConnected ? 'Yes' : 'No'}
-          </Text>
+          <Text style={styles.dataValue}>{zaptecStatus?.vehicleConnected ? "Yes" : "No"}</Text>
         </View>
       </View>
 
@@ -264,9 +227,7 @@ const HomeScreen: React.FC = () => {
           <Text style={styles.dataLabel}>Grid exchange:</Text>
           <Text style={[styles.dataValue, { color: getColorForValue(solisData?.grid.activePower || 0) }]}>
             {formatPower(solisData?.grid.activePower || 0)}
-            <Text style={styles.unitExplanation}>
-              {(solisData?.grid.activePower || 0) > 0 ? ' (injection)' : ' (consumption)'}
-            </Text>
+            <Text style={styles.unitExplanation}>{(solisData?.grid.activePower || 0) > 0 ? " (injection)" : " (consumption)"}</Text>
           </Text>
         </View>
       </View>
@@ -285,80 +246,80 @@ const HomeScreen: React.FC = () => {
  */
 const styles = StyleSheet.create({
   container: {
-    flex: 1,                    // Takes all available space
-    backgroundColor: '#F2F2F7', // Background color (iOS light gray)
+    flex: 1, // Takes all available space
+    backgroundColor: "#F2F2F7" // Background color (iOS light gray)
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',   // Center vertically
-    alignItems: 'center',       // Center horizontally
-    backgroundColor: '#F2F2F7',
+    justifyContent: "center", // Center vertically
+    alignItems: "center", // Center horizontally
+    backgroundColor: "#F2F2F7"
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#8E8E93',
+    color: "#8E8E93"
   },
   header: {
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA"
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#000000",
+    textAlign: "center"
   },
   lastUpdate: {
     fontSize: 12,
-    color: '#8E8E93',
-    textAlign: 'center',
-    marginTop: 4,
+    color: "#8E8E93",
+    textAlign: "center",
+    marginTop: 4
   },
   section: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     marginTop: 20,
     marginHorizontal: 16,
-    borderRadius: 12,           // Rounded corners
+    borderRadius: 12, // Rounded corners
     padding: 16,
-    shadowColor: '#000000',     // Shadow (iOS)
+    shadowColor: "#000000", // Shadow (iOS)
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 2
     },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,               // Shadow (Android)
+    elevation: 3 // Shadow (Android)
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 12,
+    fontWeight: "600",
+    color: "#000000",
+    marginBottom: 12
   },
   dataRow: {
-    flexDirection: 'row',       // Horizontal layout
-    justifyContent: 'space-between', // Space between elements
-    alignItems: 'center',
-    paddingVertical: 8,
+    flexDirection: "row", // Horizontal layout
+    justifyContent: "space-between", // Space between elements
+    alignItems: "center",
+    paddingVertical: 8
   },
   dataLabel: {
     fontSize: 16,
-    color: '#3C3C43',
-    flex: 1,                    // Takes available space
+    color: "#3C3C43",
+    flex: 1 // Takes available space
   },
   dataValue: {
     fontSize: 16,
-    fontWeight: '500',
-    textAlign: 'right',
+    fontWeight: "500",
+    textAlign: "right"
   },
   unitExplanation: {
     fontSize: 12,
-    fontWeight: 'normal',
-    color: '#8E8E93',
-  },
+    fontWeight: "normal",
+    color: "#8E8E93"
+  }
 });
 
 export default HomeScreen;

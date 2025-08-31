@@ -10,6 +10,7 @@ import {
   Switch,
   Modal,
 } from 'react-native';
+import { apiService } from '../services';
 
 const SettingsScreen: React.FC = () => {
   const [apiUrl, setApiUrl] = useState('http://192.168.1.100:3000');
