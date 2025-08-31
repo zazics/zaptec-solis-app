@@ -41,12 +41,8 @@ const ZaptecScreen: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   
-  // States for controls
+  // States for display
   const [isCharging, setIsCharging] = useState<boolean>(false);
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [currentInput, setCurrentInput] = useState<string>('');
-  const [automationEnabled, setAutomationEnabled] = useState<boolean>(false);
-  const [isControlLoading, setIsControlLoading] = useState<boolean>(false);
 
   // ========================================
   // FUNCTIONS
@@ -126,13 +122,13 @@ const ZaptecScreen: React.FC = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!isLoading && !isRefreshing && !isControlLoading) {
+      if (!isLoading && !isRefreshing) {
         loadData();
       }
     }, 10000); // Refresh every 10 seconds
 
     return () => clearInterval(interval);
-  }, [isLoading, isRefreshing, isControlLoading]);
+  }, [isLoading, isRefreshing]);
 
   // ========================================
   // INTERNAL COMPONENTS
