@@ -3,10 +3,8 @@
  * 
  * This screen allows to:
  * - View the Zaptec charger status
- * - Control charging (start/stop)
- * - Set charging current
  * - View detailed charger information
- * - Manage automation modes
+ * - Monitor charging status (read-only)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -91,78 +89,6 @@ const ZaptecScreen: React.FC = () => {
     loadData();
   };
 
-  /**
-   * Start or stop charging
-   */
-  const handleToggleCharging = async (): Promise<void> => {
-    setIsControlLoading(true);
-    
-    try {
-      if (isCharging) {
-        await apiService.stopCharging();
-        Alert.alert('Success', 'Charging stopped successfully.');
-      } else {
-        await apiService.startCharging();
-        Alert.alert('Success', 'Charging started successfully.');
-      }
-      
-      // Refresh data after command
-      setTimeout(() => {
-        loadData();
-      }, 2000); // Delay to allow time for the command to execute
-      
-    } catch (error) {
-      console.error('Error controlling charging:', error);
-      Alert.alert(
-        'Error',
-        'Unable to control charging. Check the connection.',
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsControlLoading(false);
-    }
-  };
-
-  /**
-   * Modify charging current
-   */
-  const handleSetCurrent = async (): Promise<void> => {
-    const current = parseFloat(currentInput);
-    
-    // Input validation
-    if (isNaN(current) || current < 6 || current > 16) {
-      Alert.alert(
-        'Invalid Value',
-        'Current must be between 6 and 16 amperes.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    setIsControlLoading(true);
-    
-    try {
-      await apiService.setChargingCurrent(current);
-      Alert.alert('Success', `Current set to ${current}A successfully.`);
-      setIsModalVisible(false);
-      setCurrentInput('');
-      
-      // Data refresh
-      setTimeout(() => {
-        loadData();
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Error setting current:', error);
-      Alert.alert(
-        'Error',
-        'Unable to set current. Check the connection.',
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsControlLoading(false);
-    }
-  };
 
   /**
    * Format operating mode to readable text
@@ -330,38 +256,6 @@ const ZaptecScreen: React.FC = () => {
         />
       </View>
 
-      {/* Controls Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🎛️ Controls</Text>
-        
-        <View style={styles.controlsContainer}>
-          <ControlButton
-            title={isCharging ? 'Stop charging' : 'Start charging'}
-            onPress={handleToggleCharging}
-            disabled={!zaptecStatus.online || !zaptecStatus.vehicleConnected}
-            color={isCharging ? '#FF3B30' : '#34C759'}
-            loading={isControlLoading}
-          />
-          
-          <ControlButton
-            title={`Set current (${zaptecStatus.ChargeCurrentSet || 0}A)`}
-            onPress={() => setIsModalVisible(true)}
-            disabled={!zaptecStatus.online}
-            color="#FF9500"
-          />
-        </View>
-
-        {/* Automation switch */}
-        <View style={styles.automationContainer}>
-          <Text style={styles.automationLabel}>Automatic mode</Text>
-          <Switch
-            value={automationEnabled}
-            onValueChange={setAutomationEnabled}
-            trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-            thumbColor={'#FFFFFF'}
-          />
-        </View>
-      </View>
 
       {/* Charging Data Section */}
       <View style={styles.section}>
@@ -425,55 +319,6 @@ const ZaptecScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Current setting modal */}
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Set charging current</Text>
-            <Text style={styles.modalSubtitle}>
-              Enter a value between 6 and 16 amperes
-            </Text>
-            
-            <TextInput
-              style={styles.modalInput}
-              value={currentInput}
-              onChangeText={setCurrentInput}
-              placeholder="Ex: 10"
-              keyboardType="numeric"
-              maxLength={2}
-            />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => {
-                  setIsModalVisible(false);
-                  setCurrentInput('');
-                }}
-              >
-                <Text style={styles.modalButtonCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={handleSetCurrent}
-                disabled={isControlLoading}
-              >
-                {isControlLoading ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text style={styles.modalButtonConfirmText}>Confirm</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </ScrollView>
   );
 };

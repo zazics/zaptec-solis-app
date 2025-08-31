@@ -17,10 +17,11 @@ A React Native mobile application with TypeScript to control and visualize your 
 - **Grid Exchange**: Energy import/export with the electrical grid
 
 ### Zaptec Screen (Charger)
-- **Charge Control**: Start/stop charging remotely
-- **Current Adjustment**: Modify charging current (6-16A)
+- **Status Monitoring**: View charging status and power consumption (read-only)
 - **Detailed Information**: Status, power, operation mode
-- **Automatic Mode**: Enable/disable automation
+- **Real-time Data**: Current, voltage, and charging session information
+
+Note: Remote control features have been removed for security reasons.
 
 ### Settings Screen
 - **Server Configuration**: IP address, timeout, secure connection
@@ -67,9 +68,8 @@ The application communicates with your Node.js server via REST HTTP requests:
 **Zaptec Endpoints:**
 - `GET /zaptec/status` - Charger status
 - `GET /zaptec/info` - Detailed information
-- `POST /zaptec/start` - Start charging
-- `POST /zaptec/stop` - Stop charging
-- `POST /zaptec/current` - Set current
+
+Note: Control endpoints (start/stop/current) have been removed for security.
 
 **Automation Endpoints:**
 - `GET /automation/status` - Automation status
@@ -134,7 +134,7 @@ npx expo build:android --type app-bundle
 ### Daily Usage
 - **Home Screen**: Check overall system status
 - **Solis Screen**: Monitor solar production and battery
-- **Zaptec Screen**: Control your vehicle charging
+- **Zaptec Screen**: Monitor your vehicle charging status
 - **Settings**: Adjust configuration as needed
 
 ### Common Troubleshooting

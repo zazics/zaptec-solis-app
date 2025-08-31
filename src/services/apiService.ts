@@ -118,17 +118,17 @@ class ApiService {
    * @returns Inverter data with solar production, battery, grid, etc.
    */
   async getSolisData(): Promise<SolisInverterData> {
-    const response = await this.get<SolisInverterData>('/solis/data');
+    const response = await this.get<SolisInverterData>('/solis/all');
     return response.data!;
   }
 
   /**
    * Retrieve only Solis inverter status
    * 
-   * @returns Simplified inverter status
+   * @returns Inverter status code and description
    */
-  async getSolisStatus(): Promise<{ status: string; online: boolean }> {
-    const response = await this.get<{ status: string; online: boolean }>('/solis/status');
+  async getSolisStatus(): Promise<{ code: number; text: string }> {
+    const response = await this.get<{ code: number; text: string }>('/solis/status');
     return response.data!;
   }
 
@@ -149,50 +149,13 @@ class ApiService {
   /**
    * Retrieve detailed charger information
    * 
-   * @returns Complete charger information
+   * @returns Complete charger information (same as status for now)
    */
   async getZaptecInfo(): Promise<ZaptecChargerInfo> {
-    const response = await this.get<ZaptecChargerInfo>('/zaptec/info');
+    const response = await this.get<ZaptecChargerInfo>('/zaptec/status');
     return response.data!;
   }
 
-  /**
-   * Start vehicle charging
-   * 
-   * @returns Start confirmation
-   */
-  async startCharging(): Promise<ApiResponse> {
-    return await this.post('/zaptec/start');
-  }
-
-  /**
-   * Stop vehicle charging
-   * 
-   * @returns Stop confirmation
-   */
-  async stopCharging(): Promise<ApiResponse> {
-    return await this.post('/zaptec/stop');
-  }
-
-  /**
-   * Modify charging current
-   * 
-   * @param current Current in amperes (6-16A generally)
-   * @returns Change confirmation
-   */
-  async setChargingCurrent(current: number): Promise<ApiResponse> {
-    return await this.post('/zaptec/current', { current });
-  }
-
-  /**
-   * General charger control
-   * 
-   * @param request Control request (start, stop, setCurrent, etc.)
-   * @returns Command confirmation
-   */
-  async controlCharger(request: ChargerControlRequest): Promise<ApiResponse> {
-    return await this.post('/zaptec/control', request);
-  }
 
   // ========================================
   // AUTOMATION METHODS
@@ -211,11 +174,11 @@ class ApiService {
   /**
    * Change automation mode
    * 
-   * @param mode Mode to activate ('manual', 'surplus', 'scheduled')
+   * @param mode Mode to activate ('manual', 'surplus')
    * @returns Change confirmation
    */
-  async setAutomationMode(mode: 'manual' | 'surplus' | 'scheduled'): Promise<ApiResponse> {
-    return await this.post('/automation/mode', { mode });
+  async setAutomationMode(mode: 'manual' | 'surplus'): Promise<ApiResponse> {
+    return await this.post('/automation/config', { mode });
   }
 
   /**
@@ -226,6 +189,24 @@ class ApiService {
    */
   async configureAutomation(config: AutomationConfigRequest): Promise<ApiResponse> {
     return await this.post('/automation/config', config);
+  }
+
+  /**
+   * Enable automation system
+   * 
+   * @returns Enable confirmation
+   */
+  async enableAutomation(): Promise<ApiResponse> {
+    return await this.post('/automation/enable');
+  }
+
+  /**
+   * Disable automation system
+   * 
+   * @returns Disable confirmation
+   */
+  async disableAutomation(): Promise<ApiResponse> {
+    return await this.post('/automation/disable');
   }
 
   // ========================================

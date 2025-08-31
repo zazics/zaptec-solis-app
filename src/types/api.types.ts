@@ -92,15 +92,14 @@ export interface AppState {
  */
 export type ApiEndpoint = 
   | '/solis/status'           // Solis inverter status
-  | '/solis/data'             // Complete Solis data
+  | '/solis/all'              // Complete Solis data
   | '/zaptec/status'          // Zaptec charger status
-  | '/zaptec/info'            // Charger information
-  | '/zaptec/start'           // Start charging
-  | '/zaptec/stop'            // Stop charging
+  | '/zaptec/charging'        // Start/stop charging
   | '/zaptec/current'         // Set current
   | '/automation/status'      // Automation status
-  | '/automation/mode'        // Automation mode
-  | '/automation/config';     // Configuration
+  | '/automation/config'      // Configuration (GET/PUT)
+  | '/automation/enable'      // Enable automation
+  | '/automation/disable';    // Disable automation
 
 /**
  * Interface for charger control requests
@@ -121,17 +120,11 @@ export interface ChargerControlRequest {
  */
 export interface AutomationConfigRequest {
   /** Automation mode */
-  mode: 'manual' | 'surplus' | 'scheduled';
-  /** Power threshold to start charging in Watts */
-  powerThreshold?: number;
+  mode?: 'manual' | 'surplus';
+  /** Maximum charging power in Watts */
+  maxChargingPower?: number;
   /** Minimum charging current in Amperes */
   minimumCurrent?: number;
   /** Maximum charging current in Amperes */
   maximumCurrent?: number;
-  /** Charging schedule (for scheduled mode) */
-  schedule?: {
-    startTime: string;
-    endTime: string;
-    daysOfWeek: number[];
-  };
 }
