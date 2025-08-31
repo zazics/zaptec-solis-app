@@ -14,7 +14,6 @@ import {
   ApiError, 
   ApiConfig,
   ZaptecStatus, 
-  ZaptecChargerInfo,
   SolisInverterData,
   ChargerControlRequest,
   AutomationConfigRequest
@@ -146,15 +145,6 @@ class ApiService {
     return response.data!;
   }
 
-  /**
-   * Retrieve detailed charger information
-   * 
-   * @returns Complete charger information (same as status for now)
-   */
-  async getZaptecInfo(): Promise<ZaptecChargerInfo> {
-    const response = await this.get<ZaptecChargerInfo>('/zaptec/status');
-    return response.data!;
-  }
 
 
   // ========================================

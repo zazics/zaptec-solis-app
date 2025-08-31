@@ -12,7 +12,6 @@
 export type {
   ZaptecStatus,
   ZaptecStateObservation,
-  ZaptecChargerInfo,
   ZaptecChargingSettings,
   ZaptecInstallationInfo,
   ZaptecInstallationUpdateRequest,

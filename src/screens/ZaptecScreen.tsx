@@ -23,7 +23,7 @@ import {
 } from 'react-native';
 
 // Import types and services
-import { ZaptecStatus, ZaptecChargerInfo } from '../types';
+import { ZaptecStatus } from '../types';
 import { apiService } from '../services';
 
 /**
@@ -37,7 +37,6 @@ const ZaptecScreen: React.FC = () => {
   // ========================================
 
   const [zaptecStatus, setZaptecStatus] = useState<ZaptecStatus | null>(null);
-  const [chargerInfo, setChargerInfo] = useState<ZaptecChargerInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -58,14 +57,10 @@ const ZaptecScreen: React.FC = () => {
    */
   const loadData = async (): Promise<void> => {
     try {
-      // Parallel loading of status and detailed information
-      const [status, info] = await Promise.all([
-        apiService.getZaptecStatus(),
-        apiService.getZaptecInfo(),
-      ]);
+      // Load charger status
+      const status = await apiService.getZaptecStatus();
 
       setZaptecStatus(status);
-      setChargerInfo(info);
       setIsCharging(status.charging || false);
       setLastUpdate(new Date());
     } catch (error) {
@@ -286,38 +281,6 @@ const ZaptecScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* Charger Information Section */}
-      {chargerInfo && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ℹ️ Charger Information</Text>
-          <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Serial number:</Text>
-            <Text style={styles.dataValue}>{chargerInfo.SerialNo}</Text>
-          </View>
-          <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Installation:</Text>
-            <Text style={styles.dataValue}>{chargerInfo.InstallationName}</Text>
-          </View>
-          <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Device type:</Text>
-            <Text style={styles.dataValue}>{chargerInfo.DeviceType}</Text>
-          </View>
-          <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Creation date:</Text>
-            <Text style={styles.dataValue}>
-              {new Date(chargerInfo.CreatedOnDate).toLocaleDateString('en-US')}
-            </Text>
-          </View>
-          <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Active:</Text>
-            <Text style={[styles.dataValue, { 
-              color: chargerInfo.Active ? '#34C759' : '#FF3B30' 
-            }]}>
-              {chargerInfo.Active ? 'Yes' : 'No'}
-            </Text>
-          </View>
-        </View>
-      )}
 
     </ScrollView>
   );
