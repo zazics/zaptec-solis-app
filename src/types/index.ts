@@ -5,12 +5,12 @@
  * to facilitate imports throughout the application.
  * 
  * Usage:
- * import { ZaptecStatus, SolisInverterData, ApiResponse } from '@/types';
+ * import { ZaptecDataDTO, SolisDataDTO, ApiResponse } from '@/types';
  */
 
 // Export Zaptec types
 export type {
-  ZaptecStatus,
+  ZaptecDataDTO,
   ZaptecStateObservation,
   ZaptecChargingSettings,
   ZaptecInstallationInfo,
@@ -24,7 +24,7 @@ export type {
   SolisHouseData,
   SolisGridData,
   SolisBatteryData,
-  SolisInverterData,
+  SolisDataDTO,
   SolisConnectionOptions,
   SolisEnergyFlow,
 } from './solis.types';

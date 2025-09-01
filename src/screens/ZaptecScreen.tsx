@@ -11,7 +11,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, ActivityIndicator, TouchableOpacity, Modal, TextInput, Switch } from "react-native";
 
 // Import types and services
-import { ZaptecStatus } from "../types";
+import { ZaptecDataDTO } from "../types";
 import { apiService } from "../services";
 
 /**
@@ -24,7 +24,7 @@ const ZaptecScreen: React.FC = () => {
   // LOCAL STATE
   // ========================================
 
-  const [zaptecStatus, setZaptecStatus] = useState<ZaptecStatus | null>(null);
+  const [zaptecStatus, setZaptecStatus] = useState<ZaptecDataDTO | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);

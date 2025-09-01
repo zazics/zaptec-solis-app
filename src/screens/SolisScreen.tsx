@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 
 // Import types and services
-import { SolisInverterData } from '../types';
+import { SolisDataDTO } from '../types';
 import { apiService } from '../services';
 
 // Get screen dimensions for charts
@@ -38,7 +38,7 @@ const SolisScreen: React.FC = () => {
   // ÉTAT LOCAL
   // ========================================
 
-  const [solisData, setSolisData] = useState<SolisInverterData | null>(null);
+  const [solisData, setSolisData] = useState<SolisDataDTO | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);

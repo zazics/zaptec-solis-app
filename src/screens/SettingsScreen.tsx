@@ -17,6 +17,7 @@ const SettingsScreen: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newUrl, setNewUrl] = useState('');
+  const [currentApiConfig, setCurrentApiConfig] = useState(apiService.getConfig());
 
   const testConnection = async () => {
     Alert.alert('Test de connexion', 'Fonctionnalité en cours de développement');
@@ -39,21 +40,23 @@ const SettingsScreen: React.FC = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Configuration serveur</Text>
         
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => {
-            setNewUrl(apiUrl);
-            setIsModalVisible(true);
-          }}
-        >
+        <View style={styles.settingItem}>
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
-              <Text style={styles.settingItemTitle}>Adresse du serveur</Text>
-              <Text style={styles.settingItemSubtitle}>{apiUrl}</Text>
+              <Text style={styles.settingItemTitle}>Adresse du backend</Text>
+              <Text style={styles.settingItemSubtitle}>{currentApiConfig.baseUrl}</Text>
             </View>
-            <Text style={styles.settingItemArrow}>›</Text>
           </View>
-        </TouchableOpacity>
+        </View>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingItemContent}>
+            <View style={styles.settingItemText}>
+              <Text style={styles.settingItemTitle}>Mode simulation</Text>
+              <Text style={styles.settingItemSubtitle}>{currentApiConfig.simulationMode ? 'Activé (localhost)' : 'Désactivé'}</Text>
+            </View>
+          </View>
+        </View>
 
         <TouchableOpacity 
           style={styles.settingItem}

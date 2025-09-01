@@ -9,7 +9,7 @@
  */
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { ApiResponse, ApiError, ApiConfig, ZaptecStatus, SolisInverterData, ChargerControlRequest, AutomationConfigRequest } from "../types";
+import { ApiResponse, ApiError, ApiConfig, ZaptecDataDTO, SolisDataDTO, ChargerControlRequest, AutomationConfigRequest } from "../types";
 
 /**
  * ApiService Class
@@ -105,22 +105,12 @@ class ApiService {
   // ========================================
 
   /**
-   * Retrieve complete Solis inverter data
+   * Retrieve complete Solis inverter data from database
    *
-   * @returns Inverter data with solar production, battery, grid, etc.
+   * @returns Latest solar inverter data with solar production, battery, grid, etc.
    */
-  async getSolisData(): Promise<SolisInverterData> {
-    const response = await this.get<SolisInverterData>("/solis/all");
-    return response;
-  }
-
-  /**
-   * Retrieve only Solis inverter status
-   *
-   * @returns Inverter status code and description
-   */
-  async getSolisStatus(): Promise<{ code: number; text: string }> {
-    const response = await this.get<{ code: number; text: string }>("/solis/status");
+  async getSolisData(): Promise<SolisDataDTO> {
+    const response = await this.get<SolisDataDTO>("/automation/solis/latest");
     return response;
   }
 
@@ -129,12 +119,12 @@ class ApiService {
   // ========================================
 
   /**
-   * Retrieve Zaptec charger status
+   * Retrieve Zaptec charger status from automation system
    *
    * @returns Charger status (online, charging, power, etc.)
    */
-  async getZaptecStatus(): Promise<ZaptecStatus> {
-    const response = await this.get<ZaptecStatus>("/zaptec/status");
+  async getZaptecStatus(): Promise<ZaptecDataDTO> {
+    const response = await this.get<ZaptecDataDTO>("/automation/zaptec/status");
     return response;
   }
 
@@ -142,15 +132,6 @@ class ApiService {
   // AUTOMATION METHODS
   // ========================================
 
-  /**
-   * Retrieve automation system status
-   *
-   * @returns Automation status (mode, configuration, etc.)
-   */
-  async getAutomationStatus(): Promise<{ mode: string; enabled: boolean; lastUpdate: string }> {
-    const response = await this.get<{ mode: string; enabled: boolean; lastUpdate: string }>("/automation/status");
-    return response;
-  }
 
   /**
    * Change automation mode

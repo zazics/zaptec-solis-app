@@ -87,10 +87,10 @@ export interface SolisBatteryData {
 }
 
 /**
- * Interface complète pour toutes les données de l'onduleur Solis
+ * DTO pour toutes les données de l'onduleur Solis
  * C'est l'interface principale que vous recevrez de votre API
  */
-export interface SolisInverterData {
+export interface SolisDataDTO {
   /** Statut de l'onduleur */
   status: {
     /** Code numérique du statut */

@@ -6,32 +6,32 @@
  */
 
 /**
- * Interface pour le statut principal d'un chargeur Zaptec
+ * DTO pour le statut principal d'un chargeur Zaptec
  * Utilisée pour afficher l'état en temps réel du chargeur
  */
-export interface ZaptecStatus {
+export interface ZaptecDataDTO {
   /** Identifiant unique du chargeur */
   id: string;
-  /** Nom du chargeur (optionnel) */
-  name?: string;
+  /** Nom du chargeur */
+  name: string;
   /** Indique si le chargeur est en ligne */
-  online?: boolean;
+  online: boolean;
   /** Indique si le chargeur est en cours de charge */
-  charging?: boolean;
+  charging: boolean;
   /** Puissance actuelle en Watts */
-  power?: number;
+  power: number;
   /** Puissance totale en Watts */
-  totalPower?: number;
+  totalPower: number;
   /** Courant de charge configuré en Ampères */
-  ChargeCurrentSet?: number;
+  ChargeCurrentSet: number;
   /** Indique si un véhicule est connecté */
-  vehicleConnected?: boolean;
+  vehicleConnected: boolean;
   /** Mode d'opération: 0=Unknown, 1=Disconnected, 2=Connected_Requesting, 3=Connected_Charging, 5=Connected_Finished */
-  operatingMode?: string;
+  operatingMode: string;
   /** Type d'appareil depuis l'API */
-  deviceType?: number;
+  deviceType: number;
   /** Numéro de série */
-  serialNo?: string;
+  serialNo: string;
 }
 
 /**

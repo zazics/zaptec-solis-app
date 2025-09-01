@@ -15,7 +15,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, ActivityIndicator } from "react-native";
 
 // Import types and services
-import { SolisInverterData, ZaptecStatus } from "../types";
+import { SolisDataDTO, ZaptecDataDTO } from "../types";
 import { apiService } from "../services";
 
 /**
@@ -32,8 +32,8 @@ const HomeScreen: React.FC = () => {
   // useState allows storing data that changes in the component
   // When state changes, React automatically re-renders the component
 
-  const [solisData, setSolisData] = useState<SolisInverterData | null>(null);
-  const [zaptecStatus, setZaptecStatus] = useState<ZaptecStatus | null>(null);
+  const [solisData, setSolisData] = useState<SolisDataDTO | null>(null);
+  const [zaptecStatus, setZaptecStatus] = useState<ZaptecDataDTO | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Loading indicator
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false); // Refresh indicator
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
