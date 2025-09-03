@@ -171,6 +171,17 @@ const SettingsScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
 
+        <View style={styles.settingItem}>
+          <View style={styles.settingItemContent}>
+            <View style={styles.settingItemText}>
+              <Text style={styles.settingItemTitle}>Clé API</Text>
+              <Text style={styles.settingItemSubtitle}>
+                {currentApiConfig.apiKey || 'Non configurée'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
         <TouchableOpacity 
           style={styles.settingItem}
           onPress={testConnection}

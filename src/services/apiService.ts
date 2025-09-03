@@ -37,7 +37,7 @@ class ApiService {
         "Content-Type": "application/json", // JSON content type
         ...(config.apiKey && {
           // Add API key if present
-          "X-API-Key": config.apiKey
+          "x-api-key": config.apiKey
         }),
         ...(config.authToken && {
           // Add authentication token if present
@@ -206,9 +206,9 @@ class ApiService {
 
     // Update API key header
     if (newConfig.apiKey) {
-      this.axiosInstance.defaults.headers.common["X-API-Key"] = newConfig.apiKey;
+      this.axiosInstance.defaults.headers.common["x-api-key"] = newConfig.apiKey;
     } else {
-      delete this.axiosInstance.defaults.headers.common["X-API-Key"];
+      delete this.axiosInstance.defaults.headers.common["x-api-key"];
     }
 
     // Update authentication header
