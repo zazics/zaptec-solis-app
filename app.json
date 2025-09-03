@@ -28,7 +28,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "21d6f625-d058-4c79-96f5-862204c38dc2"
+        "projectId": ""
       },
       "API_BASE_URL": "http://192.168.0.108:3000",
       "API_TIMEOUT": "10000",
