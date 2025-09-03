@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ZaptecSolisApp",
-    "slug": "ZaptecSolisApp",
+    "slug": "zaptecsolisapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,6 +25,18 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "21d6f625-d058-4c79-96f5-862204c38dc2"
+      },
+      "API_BASE_URL": "http://192.168.0.108:3000",
+      "API_TIMEOUT": "10000",
+      "API_RETRY_COUNT": "3",
+      "API_RETRY_DELAY": "1000",
+      "API_USE_HTTPS": "false",
+      "SIMULATION_MODE": "false",
+      "API_KEY": "123456"
     }
   }
 }
