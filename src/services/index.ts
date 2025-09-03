@@ -6,3 +6,4 @@
  */
 
 export { default as apiService } from './apiService';
+export { default as settingsService } from './settingsService';

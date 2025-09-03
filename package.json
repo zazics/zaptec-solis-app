@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "web:clear": "expo start --web --clear",
+    "startclear": "expo start --clear"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
@@ -16,6 +18,7 @@
     "@react-navigation/stack": "^7.4.7",
     "axios": "^1.11.0",
     "expo": "~53.0.22",
+    "expo-constants": "^17.1.7",
     "expo-status-bar": "~2.2.3",
     "expo-system-ui": "~5.0.11",
     "react": "19.0.0",

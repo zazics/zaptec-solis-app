@@ -46,6 +46,8 @@ export interface ApiConfig {
   timeout?: number;
   /** Authentication token if needed */
   authToken?: string;
+  /** API key for authentication */
+  apiKey?: string;
   /** Indicates if requests should use HTTPS */
   useHttps?: boolean;
   /** Simulation mode enabled (forces localhost) */

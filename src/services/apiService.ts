@@ -35,6 +35,10 @@ class ApiService {
       timeout: config.timeout || 10000, // 10 second timeout by default
       headers: {
         "Content-Type": "application/json", // JSON content type
+        ...(config.apiKey && {
+          // Add API key if present
+          "X-API-Key": config.apiKey
+        }),
         ...(config.authToken && {
           // Add authentication token if present
           Authorization: `Bearer ${config.authToken}`
@@ -132,7 +136,6 @@ class ApiService {
   // AUTOMATION METHODS
   // ========================================
 
-
   /**
    * Change automation mode
    *
@@ -201,6 +204,13 @@ class ApiService {
     this.axiosInstance.defaults.baseURL = newConfig.baseUrl;
     this.axiosInstance.defaults.timeout = newConfig.timeout || 10000;
 
+    // Update API key header
+    if (newConfig.apiKey) {
+      this.axiosInstance.defaults.headers.common["X-API-Key"] = newConfig.apiKey;
+    } else {
+      delete this.axiosInstance.defaults.headers.common["X-API-Key"];
+    }
+
     // Update authentication header
     if (newConfig.authToken) {
       this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${newConfig.authToken}`;
@@ -223,15 +233,24 @@ class ApiService {
 // SINGLETON INSTANCE AND EXPORT
 // ========================================
 
-import { API_BASE_URL, API_TIMEOUT, API_USE_HTTPS, SIMULATION_MODE } from "@env";
+import { API_BASE_URL, API_TIMEOUT, API_USE_HTTPS, SIMULATION_MODE, API_KEY } from "@env";
+import Constants from "expo-constants";
 
-// Default configuration (loaded from environment variables)
-const simulationMode = SIMULATION_MODE === "true" || false;
+// Get configuration from .env or app.json extra fields (for builds)
+const getEnvVar = (envVar: string, extraKey: string, fallback: string = ""): string => {
+  return envVar || Constants.expoConfig?.extra?.[extraKey] || fallback;
+};
+
+// Default configuration (loaded from environment variables or app.json)
+const simulationMode = getEnvVar(SIMULATION_MODE, "SIMULATION_MODE", "false") === "true";
 const defaultConfig: ApiConfig = {
-  baseUrl: simulationMode ? "http://localhost:3000" : (API_BASE_URL || "http://192.168.1.100:3000"), // Force localhost if simulation mode
-  timeout: parseInt(API_TIMEOUT) || 10000, // Timeout from .env file
-  useHttps: API_USE_HTTPS === "true" || false, // HTTPS setting from .env file
-  simulationMode: simulationMode // Simulation mode from .env file
+  baseUrl: simulationMode 
+    ? "http://localhost:3000" 
+    : getEnvVar(API_BASE_URL, "API_BASE_URL", "http://192.168.1.100:3000"),
+  timeout: parseInt(getEnvVar(API_TIMEOUT, "API_TIMEOUT", "10000")),
+  useHttps: getEnvVar(API_USE_HTTPS, "API_USE_HTTPS", "false") === "true",
+  simulationMode: simulationMode,
+  apiKey: getEnvVar(API_KEY, "API_KEY", "")
 };
 
 // API service singleton instance

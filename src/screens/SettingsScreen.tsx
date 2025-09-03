@@ -10,24 +10,128 @@ import {
   Switch,
   Modal,
 } from 'react-native';
-import { apiService } from '../services';
+import { apiService, settingsService } from '../services';
 
 const SettingsScreen: React.FC = () => {
-  const [apiUrl, setApiUrl] = useState('http://192.168.1.100:3000');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [newUrl, setNewUrl] = useState('');
+  const [isIpModalVisible, setIsIpModalVisible] = useState(false);
+  const [newIp, setNewIp] = useState('');
+  const [newPort, setNewPort] = useState('3000');
   const [currentApiConfig, setCurrentApiConfig] = useState(apiService.getConfig());
+  const [isLoading, setIsLoading] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'failed'>('unknown');
 
-  const testConnection = async () => {
-    Alert.alert('Test de connexion', 'Fonctionnalité en cours de développement');
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settings = await settingsService.loadSettings();
+      setNotificationsEnabled(settings.notificationsEnabled);
+      const apiConfig = settingsService.getApiConfig();
+      setCurrentApiConfig(apiConfig);
+      
+      // Pré-remplir les champs IP avec la configuration actuelle
+      const { ip, port } = settingsService.parseBackendUrl(apiConfig.baseUrl);
+      setNewIp(ip);
+      setNewPort(port.toString());
+    } catch (error) {
+      console.error('Erreur lors du chargement des paramètres:', error);
+    }
   };
 
-  const saveUrl = () => {
-    setApiUrl(newUrl);
-    setIsModalVisible(false);
-    setNewUrl('');
-    Alert.alert('Succès', 'URL sauvegardée');
+  const testConnection = async () => {
+    setIsLoading(true);
+    try {
+      const isConnected = await apiService.testConnection();
+      setConnectionStatus(isConnected ? 'connected' : 'failed');
+      Alert.alert(
+        'Test de connexion', 
+        isConnected ? 'Connexion réussie!' : 'Connexion échouée. Vérifiez l\'adresse IP et la disponibilité du serveur.'
+      );
+    } catch (error) {
+      setConnectionStatus('failed');
+      Alert.alert('Test de connexion', 'Erreur lors du test de connexion');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveIpConfiguration = async () => {
+    if (!newIp.trim()) {
+      Alert.alert('Erreur', 'Veuillez entrer une adresse IP');
+      return;
+    }
+
+    const port = parseInt(newPort) || 3000;
+    
+    try {
+      setIsLoading(true);
+      const newApiConfig = await settingsService.setCustomBackendUrl(newIp.trim(), port);
+      
+      // Mettre à jour la configuration de l'API service
+      apiService.updateConfig(newApiConfig);
+      setCurrentApiConfig(newApiConfig);
+      
+      setIsIpModalVisible(false);
+      setConnectionStatus('unknown');
+      Alert.alert('Succès', 'Configuration IP sauvegardée');
+    } catch (error) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetToDefault = async () => {
+    try {
+      setIsLoading(true);
+      const defaultConfig = await settingsService.resetToDefaultUrl();
+      
+      // Mettre à jour la configuration de l'API service
+      apiService.updateConfig(defaultConfig);
+      setCurrentApiConfig(defaultConfig);
+      
+      const { ip, port } = settingsService.parseBackendUrl(defaultConfig.baseUrl);
+      setNewIp(ip);
+      setNewPort(port.toString());
+      
+      setConnectionStatus('unknown');
+      Alert.alert('Succès', 'Configuration réinitialisée à la valeur par défaut');
+    } catch (error) {
+      Alert.alert('Erreur', 'Erreur lors de la réinitialisation');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleSimulationMode = async () => {
+    try {
+      setIsLoading(true);
+      const newConfig = await settingsService.toggleSimulationMode();
+      
+      apiService.updateConfig(newConfig);
+      setCurrentApiConfig(newConfig);
+      
+      const { ip, port } = settingsService.parseBackendUrl(newConfig.baseUrl);
+      setNewIp(ip);
+      setNewPort(port.toString());
+      
+      setConnectionStatus('unknown');
+      Alert.alert('Succès', `Mode ${newConfig.simulationMode ? 'simulation' : 'production'} activé`);
+    } catch (error) {
+      Alert.alert('Erreur', 'Erreur lors du changement de mode');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openIpModal = () => {
+    const { ip, port } = settingsService.parseBackendUrl(currentApiConfig.baseUrl);
+    setNewIp(ip);
+    setNewPort(port.toString());
+    setIsIpModalVisible(true);
   };
 
   return (
@@ -40,32 +144,65 @@ const SettingsScreen: React.FC = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Configuration serveur</Text>
         
-        <View style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={openIpModal}
+        >
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Adresse du backend</Text>
               <Text style={styles.settingItemSubtitle}>{currentApiConfig.baseUrl}</Text>
             </View>
+            <Text style={styles.settingItemArrow}>›</Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={toggleSimulationMode}
+          disabled={isLoading}
+        >
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Mode simulation</Text>
               <Text style={styles.settingItemSubtitle}>{currentApiConfig.simulationMode ? 'Activé (localhost)' : 'Désactivé'}</Text>
             </View>
+            <Text style={styles.settingItemArrow}>›</Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.settingItem}
           onPress={testConnection}
+          disabled={isLoading}
         >
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Tester la connexion</Text>
-              <Text style={styles.settingItemSubtitle}>Vérifier la communication</Text>
+              <Text style={[
+                styles.settingItemSubtitle,
+                connectionStatus === 'connected' && { color: '#34C759' },
+                connectionStatus === 'failed' && { color: '#FF3B30' }
+              ]}>
+                {isLoading ? 'Test en cours...' : 
+                 connectionStatus === 'connected' ? 'Connexion OK' :
+                 connectionStatus === 'failed' ? 'Connexion échouée' :
+                 'Vérifier la communication'}
+              </Text>
+            </View>
+            <Text style={styles.settingItemArrow}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={resetToDefault}
+          disabled={isLoading}
+        >
+          <View style={styles.settingItemContent}>
+            <View style={styles.settingItemText}>
+              <Text style={styles.settingItemTitle}>Réinitialiser la configuration</Text>
+              <Text style={styles.settingItemSubtitle}>Revenir aux paramètres par défaut</Text>
             </View>
             <Text style={styles.settingItemArrow}>›</Text>
           </View>
@@ -106,35 +243,54 @@ const SettingsScreen: React.FC = () => {
       </View>
 
       <Modal
-        visible={isModalVisible}
+        visible={isIpModalVisible}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setIsModalVisible(false)}
+        onRequestClose={() => setIsIpModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Adresse du serveur</Text>
+            <Text style={styles.modalTitle}>Configuration serveur</Text>
             
+            <Text style={styles.modalLabel}>Adresse IP</Text>
             <TextInput
               style={styles.modalInput}
-              value={newUrl}
-              onChangeText={setNewUrl}
-              placeholder="http://192.168.1.100:3000"
+              value={newIp}
+              onChangeText={setNewIp}
+              placeholder="192.168.0.108"
+              keyboardType="numeric"
             />
+            
+            <Text style={styles.modalLabel}>Port</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={newPort}
+              onChangeText={setNewPort}
+              placeholder="3000"
+              keyboardType="numeric"
+            />
+            
+            <Text style={styles.modalNote}>
+              URL finale : http://{newIp || '192.168.0.108'}:{newPort || '3000'}
+            </Text>
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setIsModalVisible(false)}
+                onPress={() => setIsIpModalVisible(false)}
+                disabled={isLoading}
               >
                 <Text style={styles.modalButtonCancelText}>Annuler</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={saveUrl}
+                onPress={saveIpConfiguration}
+                disabled={isLoading}
               >
-                <Text style={styles.modalButtonConfirmText}>Sauvegarder</Text>
+                <Text style={styles.modalButtonConfirmText}>
+                  {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -240,6 +396,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000000',
+    marginBottom: 8,
+    marginTop: 12,
+  },
   modalInput: {
     borderWidth: 1,
     borderColor: '#E5E5EA',
@@ -247,7 +410,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
+    marginBottom: 12,
+  },
+  modalNote: {
+    fontSize: 12,
+    color: '#8E8E93',
+    fontStyle: 'italic',
+    textAlign: 'center',
     marginBottom: 20,
+    paddingHorizontal: 8,
   },
   modalButtons: {
     flexDirection: 'row',
