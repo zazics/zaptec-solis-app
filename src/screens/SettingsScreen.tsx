@@ -15,8 +15,10 @@ import { apiService, settingsService } from '../services';
 const SettingsScreen: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isIpModalVisible, setIsIpModalVisible] = useState(false);
+  const [isApiKeyModalVisible, setIsApiKeyModalVisible] = useState(false);
   const [newIp, setNewIp] = useState('');
   const [newPort, setNewPort] = useState('3000');
+  const [newApiKey, setNewApiKey] = useState('');
   const [currentApiConfig, setCurrentApiConfig] = useState(apiService.getConfig());
   const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'failed'>('unknown');
@@ -134,6 +136,49 @@ const SettingsScreen: React.FC = () => {
     setIsIpModalVisible(true);
   };
 
+  const openApiKeyModal = () => {
+    setNewApiKey(currentApiConfig.apiKey || '');
+    setIsApiKeyModalVisible(true);
+  };
+
+  const saveApiKeyConfiguration = async () => {
+    try {
+      setIsLoading(true);
+      const newApiConfig = await settingsService.setCustomApiKey(newApiKey.trim());
+      
+      // Mettre à jour la configuration de l'API service
+      apiService.updateConfig(newApiConfig);
+      setCurrentApiConfig(newApiConfig);
+      
+      setIsApiKeyModalVisible(false);
+      setConnectionStatus('unknown');
+      Alert.alert('Succès', 'Clé API sauvegardée');
+    } catch (error) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetApiKeyToDefault = async () => {
+    try {
+      setIsLoading(true);
+      const defaultConfig = await settingsService.resetToDefaultApiKey();
+      
+      // Mettre à jour la configuration de l'API service
+      apiService.updateConfig(defaultConfig);
+      setCurrentApiConfig(defaultConfig);
+      
+      setNewApiKey(defaultConfig.apiKey || '');
+      setConnectionStatus('unknown');
+      Alert.alert('Succès', 'Clé API réinitialisée à la valeur par défaut');
+    } catch (error) {
+      Alert.alert('Erreur', 'Erreur lors de la réinitialisation');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -171,7 +216,10 @@ const SettingsScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
 
-        <View style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={openApiKeyModal}
+        >
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Clé API</Text>
@@ -179,8 +227,9 @@ const SettingsScreen: React.FC = () => {
                 {currentApiConfig.apiKey || 'Non configurée'}
               </Text>
             </View>
+            <Text style={styles.settingItemArrow}>›</Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.settingItem}
@@ -297,6 +346,57 @@ const SettingsScreen: React.FC = () => {
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonConfirm]}
                 onPress={saveIpConfiguration}
+                disabled={isLoading}
+              >
+                <Text style={styles.modalButtonConfirmText}>
+                  {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={isApiKeyModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsApiKeyModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Configuration clé API</Text>
+            
+            <Text style={styles.modalLabel}>Clé API</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={newApiKey}
+              onChangeText={setNewApiKey}
+              placeholder="Entrez la clé API"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setIsApiKeyModalVisible(false)}
+                disabled={isLoading}
+              >
+                <Text style={styles.modalButtonCancelText}>Annuler</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonDefault]}
+                onPress={resetApiKeyToDefault}
+                disabled={isLoading}
+              >
+                <Text style={styles.modalButtonDefaultText}>Défaut</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={saveApiKeyConfiguration}
                 disabled={isLoading}
               >
                 <Text style={styles.modalButtonConfirmText}>
@@ -434,13 +534,13 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 8,
   },
   modalButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
-    marginHorizontal: 4,
   },
   modalButtonCancel: {
     backgroundColor: '#E5E5EA',
@@ -448,9 +548,17 @@ const styles = StyleSheet.create({
   modalButtonConfirm: {
     backgroundColor: '#007AFF',
   },
+  modalButtonDefault: {
+    backgroundColor: '#FF9500',
+  },
   modalButtonCancelText: {
     fontSize: 16,
     color: '#8E8E93',
+  },
+  modalButtonDefaultText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   modalButtonConfirmText: {
     fontSize: 16,

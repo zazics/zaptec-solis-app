@@ -1,25 +1,31 @@
 /**
  * SETTINGS SERVICE
- * 
+ *
  * Ce service gère la persistance des paramètres utilisateur
  * et la configuration dynamique de l'API.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ApiConfig, AppSettings } from '../types';
-import { API_BASE_URL, API_TIMEOUT, API_USE_HTTPS, SIMULATION_MODE } from '@env';
-import { STORAGE_KEYS } from '../constants';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ApiConfig, AppSettings } from "../types";
+import { API_BASE_URL, API_TIMEOUT, API_USE_HTTPS, SIMULATION_MODE, API_KEY } from "@env";
+import { STORAGE_KEYS } from "../constants";
+import Constants from "expo-constants";
 
 /**
- * Configuration par défaut basée sur les variables d'environnement
+ * Configuration par défaut basée sur les variables d'environnement ou app.json
  */
+const getEnvVar = (envVar: string, extraKey: string, fallback: string = ""): string => {
+  return envVar || Constants.expoConfig?.extra?.[extraKey] || fallback;
+};
+
 const getDefaultApiConfig = (): ApiConfig => {
-  const simulationMode = SIMULATION_MODE === 'true' || false;
+  const simulationMode = getEnvVar(SIMULATION_MODE, "SIMULATION_MODE", "false") === "true";
   return {
-    baseUrl: simulationMode ? 'http://localhost:3000' : (API_BASE_URL || 'http://192.168.0.108:3000'),
-    timeout: parseInt(API_TIMEOUT) || 10000,
-    useHttps: API_USE_HTTPS === 'true' || false,
-    simulationMode: simulationMode
+    baseUrl: simulationMode ? "http://localhost:3000" : getEnvVar(API_BASE_URL, "API_BASE_URL", "http://192.168.0.108:3000"),
+    timeout: parseInt(getEnvVar(API_TIMEOUT, "API_TIMEOUT", "10000")),
+    useHttps: getEnvVar(API_USE_HTTPS, "API_USE_HTTPS", "false") === "true",
+    simulationMode: simulationMode,
+    apiKey: getEnvVar(API_KEY, "API_KEY", "")
   };
 };
 
@@ -29,11 +35,11 @@ const getDefaultApiConfig = (): ApiConfig => {
 const getDefaultSettings = (): AppSettings => ({
   api: getDefaultApiConfig(),
   refreshInterval: 15000,
-  theme: 'light',
+  theme: "light",
   notificationsEnabled: true,
-  units: 'metric',
-  language: 'fr',
-  simulationMode: SIMULATION_MODE === 'true' || false
+  units: "metric",
+  language: "fr",
+  simulationMode: getEnvVar(SIMULATION_MODE, "SIMULATION_MODE", "false") === "true"
 });
 
 export class SettingsService {
@@ -65,7 +71,7 @@ export class SettingsService {
         this.settings = { ...getDefaultSettings(), ...parsedSettings };
       }
     } catch (error) {
-      console.warn('Erreur lors du chargement des paramètres:', error);
+      console.warn("Erreur lors du chargement des paramètres:", error);
       this.settings = getDefaultSettings();
     }
     return this.settings;
@@ -79,7 +85,7 @@ export class SettingsService {
       this.settings = { ...this.settings, ...settings };
       await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(this.settings));
     } catch (error) {
-      console.error('Erreur lors de la sauvegarde des paramètres:', error);
+      console.error("Erreur lors de la sauvegarde des paramètres:", error);
       throw error;
     }
   }
@@ -114,11 +120,11 @@ export class SettingsService {
   async setCustomBackendUrl(ip: string, port: number = 3000): Promise<ApiConfig> {
     // Validation de l'IP
     if (!this.isValidIpAddress(ip)) {
-      throw new Error('Adresse IP invalide');
+      throw new Error("Adresse IP invalide");
     }
 
     // Construction de l'URL
-    const protocol = this.settings.api.useHttps ? 'https' : 'http';
+    const protocol = this.settings.api.useHttps ? "https" : "http";
     const baseUrl = `${protocol}://${ip}:${port}`;
 
     await this.updateApiConfig({ baseUrl });
@@ -140,11 +146,28 @@ export class SettingsService {
    */
   async toggleSimulationMode(): Promise<ApiConfig> {
     const simulationMode = !this.settings.simulationMode;
-    const baseUrl = simulationMode ? 'http://localhost:3000' : (API_BASE_URL || 'http://192.168.0.108:3000');
-    
+    const baseUrl = simulationMode ? "http://localhost:3000" : API_BASE_URL || "http://192.168.0.108:3000";
+
     await this.saveSettings({ simulationMode });
     await this.updateApiConfig({ baseUrl, simulationMode });
-    
+
+    return this.getApiConfig();
+  }
+
+  /**
+   * Définir une clé API personnalisée
+   */
+  async setCustomApiKey(apiKey: string): Promise<ApiConfig> {
+    await this.updateApiConfig({ apiKey });
+    return this.getApiConfig();
+  }
+
+  /**
+   * Réinitialiser à la clé API par défaut
+   */
+  async resetToDefaultApiKey(): Promise<ApiConfig> {
+    const defaultApiKey = getEnvVar(API_KEY, "API_KEY", "");
+    await this.updateApiConfig({ apiKey: defaultApiKey });
     return this.getApiConfig();
   }
 
@@ -152,8 +175,8 @@ export class SettingsService {
    * Obtenir l'adresse IP par défaut depuis l'environnement
    */
   getDefaultBackendUrl(): string {
-    const simulationMode = SIMULATION_MODE === 'true' || false;
-    return simulationMode ? 'http://localhost:3000' : (API_BASE_URL || 'http://192.168.0.108:3000');
+    const simulationMode = SIMULATION_MODE === "true" || false;
+    return simulationMode ? "http://localhost:3000" : API_BASE_URL || "http://192.168.0.108:3000";
   }
 
   /**
@@ -167,7 +190,7 @@ export class SettingsService {
         port: parseInt(urlObj.port) || 3000
       };
     } catch {
-      return { ip: '192.168.0.108', port: 3000 };
+      return { ip: "192.168.0.108", port: 3000 };
     }
   }
 
@@ -176,7 +199,7 @@ export class SettingsService {
    */
   private isValidIpAddress(ip: string): boolean {
     const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    return ipRegex.test(ip) || ip === 'localhost';
+    return ipRegex.test(ip) || ip === "localhost";
   }
 
   /**
@@ -187,7 +210,7 @@ export class SettingsService {
       await AsyncStorage.removeItem(STORAGE_KEYS.SETTINGS);
       this.settings = getDefaultSettings();
     } catch (error) {
-      console.error('Erreur lors de la réinitialisation:', error);
+      console.error("Erreur lors de la réinitialisation:", error);
       throw error;
     }
   }

@@ -1,6 +1,6 @@
 /**
  * API TYPES - Definitions for Node.js API responses
- * 
+ *
  * This file contains interfaces for standardized responses
  * from your Node.js API as well as application configuration types.
  */
@@ -42,16 +42,16 @@ export interface ApiError {
 export interface ApiConfig {
   /** Base URL of your Node.js API (ex: http://192.168.1.100:3000) */
   baseUrl: string;
+  /** API key for authentication */
+  apiKey: string;
+  /** Simulation mode enabled (forces localhost) */
+  simulationMode: boolean;
   /** Request timeout in milliseconds */
   timeout?: number;
   /** Authentication token if needed */
   authToken?: string;
-  /** API key for authentication */
-  apiKey?: string;
   /** Indicates if requests should use HTTPS */
   useHttps?: boolean;
-  /** Simulation mode enabled (forces localhost) */
-  simulationMode?: boolean;
 }
 
 /**
@@ -64,13 +64,13 @@ export interface AppSettings {
   /** Data refresh interval in milliseconds */
   refreshInterval: number;
   /** Application theme (light/dark) */
-  theme: 'light' | 'dark';
+  theme: "light" | "dark";
   /** Notifications enabled */
   notificationsEnabled: boolean;
   /** Units to display (metric/imperial) */
-  units: 'metric' | 'imperial';
+  units: "metric" | "imperial";
   /** Interface language */
-  language: 'fr' | 'en';
+  language: "fr" | "en";
   /** Simulation mode enabled */
   simulationMode: boolean;
 }
@@ -83,7 +83,7 @@ export interface AppState {
   /** Configuration and settings */
   settings: AppSettings;
   /** API connection status */
-  connectionStatus: 'connected' | 'disconnected' | 'connecting' | 'error';
+  connectionStatus: "connected" | "disconnected" | "connecting" | "error";
   /** Last error that occurred */
   lastError?: string;
   /** Indicates if the application is loading data */
@@ -96,16 +96,16 @@ export interface AppState {
  * Type for available endpoints in your API
  * Facilitates navigation and avoids typos
  */
-export type ApiEndpoint = 
-  | '/solis/status'           // Solis inverter status
-  | '/solis/all'              // Complete Solis data
-  | '/zaptec/status'          // Zaptec charger status
-  | '/zaptec/charging'        // Start/stop charging
-  | '/zaptec/current'         // Set current
-  | '/automation/status'      // Automation status
-  | '/automation/config'      // Configuration (GET/PUT)
-  | '/automation/enable'      // Enable automation
-  | '/automation/disable';    // Disable automation
+export type ApiEndpoint =
+  | "/solis/status" // Solis inverter status
+  | "/solis/all" // Complete Solis data
+  | "/zaptec/status" // Zaptec charger status
+  | "/zaptec/charging" // Start/stop charging
+  | "/zaptec/current" // Set current
+  | "/automation/status" // Automation status
+  | "/automation/config" // Configuration (GET/PUT)
+  | "/automation/enable" // Enable automation
+  | "/automation/disable"; // Disable automation
 
 /**
  * Interface for charger control requests
@@ -113,7 +113,7 @@ export type ApiEndpoint =
  */
 export interface ChargerControlRequest {
   /** Action to perform */
-  action: 'start' | 'stop' | 'setCurrent' | 'setMode';
+  action: "start" | "stop" | "setCurrent" | "setMode";
   /** Associated value (ex: current in amperes) */
   value?: number;
   /** Additional parameters */
@@ -126,7 +126,7 @@ export interface ChargerControlRequest {
  */
 export interface AutomationConfigRequest {
   /** Automation mode */
-  mode?: 'manual' | 'surplus';
+  mode?: "manual" | "surplus";
   /** Maximum charging power in Watts */
   maxChargingPower?: number;
   /** Minimum charging current in Amperes */
