@@ -38,4 +38,6 @@ yarn-error.*
 
 .env
 android
+temp-build
 app.json
+build-install.bat

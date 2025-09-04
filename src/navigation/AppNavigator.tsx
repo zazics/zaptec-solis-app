@@ -12,6 +12,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import { Ionicons } from '@expo/vector-icons';
 
 // Import screens
 import { HomeScreen, SolisScreen, ZaptecScreen, SettingsScreen } from '../screens';
@@ -63,8 +64,7 @@ function TabNavigator() {
         component={HomeScreen}
         options={{
           title: 'Home',
-          // Here you can add an icon with tabBarIcon
-          // tabBarIcon: ({ color, size }) => <Icon name="home" size={size} color={color} />
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />
         }}
       />
       
@@ -74,7 +74,7 @@ function TabNavigator() {
         component={SolisScreen}
         options={{
           title: 'Solar',
-          // tabBarIcon: ({ color, size }) => <Icon name="sun" size={size} color={color} />
+          tabBarIcon: ({ color, size }) => <Ionicons name="sunny" size={size} color={color} />
         }}
       />
       
@@ -84,7 +84,7 @@ function TabNavigator() {
         component={ZaptecScreen}
         options={{
           title: 'Charger',
-          // tabBarIcon: ({ color, size }) => <Icon name="car" size={size} color={color} />
+          tabBarIcon: ({ color, size }) => <Ionicons name="car" size={size} color={color} />
         }}
       />
       
@@ -94,7 +94,7 @@ function TabNavigator() {
         component={SettingsScreen}
         options={{
           title: 'Settings',
-          // tabBarIcon: ({ color, size }) => <Icon name="settings" size={size} color={color} />
+          tabBarIcon: ({ color, size }) => <Ionicons name="settings" size={size} color={color} />
         }}
       />
     </Tab.Navigator>
