@@ -121,16 +121,11 @@ export interface ChargerControlRequest {
 }
 
 /**
- * Interface for automation configuration requests
- * Allows modifying automation system parameters
+ * Interface for automation status and configuration response
  */
-export interface AutomationConfigRequest {
-  /** Automation mode */
-  mode?: "manual" | "surplus";
-  /** Maximum charging power in Watts */
-  maxChargingPower?: number;
-  /** Minimum charging current in Amperes */
-  minimumCurrent?: number;
-  /** Maximum charging current in Amperes */
-  maximumCurrent?: number;
+export interface AutomationConfig {
+  enabled: boolean;
+  mode: "surplus" | "manual" | "minimum" | "force_minimum";
+  maxChargingPower: number;
+  priorityLoadReserve: number;
 }

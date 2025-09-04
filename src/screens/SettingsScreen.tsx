@@ -11,15 +11,19 @@ import {
   Modal,
 } from 'react-native';
 import { apiService, settingsService } from '../services';
+import { AutomationConfig } from '../types';
 
 const SettingsScreen: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isIpModalVisible, setIsIpModalVisible] = useState(false);
   const [isApiKeyModalVisible, setIsApiKeyModalVisible] = useState(false);
+  const [isModeModalVisible, setIsModeModalVisible] = useState(false);
   const [newIp, setNewIp] = useState('');
   const [newPort, setNewPort] = useState('3000');
   const [newApiKey, setNewApiKey] = useState('');
   const [currentApiConfig, setCurrentApiConfig] = useState(apiService.getConfig());
+  const [automationConfig, setAutomationConfig] = useState<AutomationConfig | null>(null);
+  const [selectedMode, setSelectedMode] = useState<'surplus' | 'manual' | 'minimum' | 'force_minimum'>('surplus');
   const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'failed'>('unknown');
 
@@ -38,8 +42,21 @@ const SettingsScreen: React.FC = () => {
       const { ip, port } = settingsService.parseBackendUrl(apiConfig.baseUrl);
       setNewIp(ip);
       setNewPort(port.toString());
+
+      // Charger la configuration d'automatisation
+      await loadAutomationConfig();
     } catch (error) {
       console.error('Erreur lors du chargement des paramètres:', error);
+    }
+  };
+
+  const loadAutomationConfig = async () => {
+    try {
+      const config = await apiService.getAutomationConfig();
+      setAutomationConfig(config);
+      setSelectedMode(config.mode);
+    } catch (error) {
+      console.error('Erreur lors du chargement de la configuration d\'automatisation:', error);
     }
   };
 
@@ -108,26 +125,6 @@ const SettingsScreen: React.FC = () => {
     }
   };
 
-  const toggleSimulationMode = async () => {
-    try {
-      setIsLoading(true);
-      const newConfig = await settingsService.toggleSimulationMode();
-      
-      apiService.updateConfig(newConfig);
-      setCurrentApiConfig(newConfig);
-      
-      const { ip, port } = settingsService.parseBackendUrl(newConfig.baseUrl);
-      setNewIp(ip);
-      setNewPort(port.toString());
-      
-      setConnectionStatus('unknown');
-      Alert.alert('Succès', `Mode ${newConfig.simulationMode ? 'simulation' : 'production'} activé`);
-    } catch (error) {
-      Alert.alert('Erreur', 'Erreur lors du changement de mode');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const openIpModal = () => {
     const { ip, port } = settingsService.parseBackendUrl(currentApiConfig.baseUrl);
@@ -179,6 +176,47 @@ const SettingsScreen: React.FC = () => {
     }
   };
 
+  const openModeModal = () => {
+    if (automationConfig) {
+      setSelectedMode(automationConfig.mode);
+    }
+    setIsModeModalVisible(true);
+  };
+
+  const saveModeConfiguration = async () => {
+    try {
+      setIsLoading(true);
+      await apiService.setAutomationMode(selectedMode);
+      await loadAutomationConfig(); // Recharger la configuration
+      setIsModeModalVisible(false);
+      Alert.alert('Succès', `Mode ${getModeLabel(selectedMode)} activé`);
+    } catch (error) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getModeLabel = (mode: 'surplus' | 'manual' | 'minimum' | 'force_minimum') => {
+    switch (mode) {
+      case 'surplus': return 'Surplus solaire';
+      case 'manual': return 'Manuel';
+      case 'minimum': return 'Minimum 6A';
+      case 'force_minimum': return 'Force minimum 6A';
+      default: return mode;
+    }
+  };
+
+  const getModeDescription = (mode: 'surplus' | 'manual' | 'minimum' | 'force_minimum') => {
+    switch (mode) {
+      case 'surplus': return 'Charge uniquement avec le surplus d\'énergie solaire';
+      case 'manual': return 'Contrôle manuel du chargeur';
+      case 'minimum': return 'Charge à 6A si assez de puissance solaire';
+      case 'force_minimum': return 'Charge toujours à 6A, même sans soleil';
+      default: return '';
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -202,19 +240,6 @@ const SettingsScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={toggleSimulationMode}
-          disabled={isLoading}
-        >
-          <View style={styles.settingItemContent}>
-            <View style={styles.settingItemText}>
-              <Text style={styles.settingItemTitle}>Mode simulation</Text>
-              <Text style={styles.settingItemSubtitle}>{currentApiConfig.simulationMode ? 'Activé (localhost)' : 'Désactivé'}</Text>
-            </View>
-            <Text style={styles.settingItemArrow}>›</Text>
-          </View>
-        </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.settingItem}
@@ -225,6 +250,22 @@ const SettingsScreen: React.FC = () => {
               <Text style={styles.settingItemTitle}>Clé API</Text>
               <Text style={styles.settingItemSubtitle}>
                 {currentApiConfig.apiKey || 'Non configurée'}
+              </Text>
+            </View>
+            <Text style={styles.settingItemArrow}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={openModeModal}
+          disabled={isLoading || !automationConfig}
+        >
+          <View style={styles.settingItemContent}>
+            <View style={styles.settingItemText}>
+              <Text style={styles.settingItemTitle}>Mode d'automatisation</Text>
+              <Text style={styles.settingItemSubtitle}>
+                {automationConfig ? getModeLabel(automationConfig.mode) : 'Chargement...'}
               </Text>
             </View>
             <Text style={styles.settingItemArrow}>›</Text>
@@ -407,6 +448,71 @@ const SettingsScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        visible={isModeModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsModeModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Mode d'automatisation</Text>
+            
+            <Text style={styles.modalLabel}>Sélectionnez un mode :</Text>
+            
+            {(['surplus', 'manual', 'minimum', 'force_minimum'] as const).map((mode) => (
+              <TouchableOpacity
+                key={mode}
+                style={[
+                  styles.modeOption,
+                  selectedMode === mode && styles.modeOptionSelected
+                ]}
+                onPress={() => setSelectedMode(mode)}
+              >
+                <View style={styles.modeOptionContent}>
+                  <Text style={[
+                    styles.modeOptionTitle,
+                    selectedMode === mode && styles.modeOptionTitleSelected
+                  ]}>
+                    {getModeLabel(mode)}
+                  </Text>
+                  <Text style={[
+                    styles.modeOptionDescription,
+                    selectedMode === mode && styles.modeOptionDescriptionSelected
+                  ]}>
+                    {getModeDescription(mode)}
+                  </Text>
+                </View>
+                <View style={[
+                  styles.modeOptionRadio,
+                  selectedMode === mode && styles.modeOptionRadioSelected
+                ]} />
+              </TouchableOpacity>
+            ))}
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setIsModeModalVisible(false)}
+                disabled={isLoading}
+              >
+                <Text style={styles.modalButtonCancelText}>Annuler</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={saveModeConfiguration}
+                disabled={isLoading}
+              >
+                <Text style={styles.modalButtonConfirmText}>
+                  {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -564,6 +670,52 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  modeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#FFFFFF',
+  },
+  modeOptionSelected: {
+    borderColor: '#007AFF',
+    backgroundColor: '#F0F8FF',
+  },
+  modeOptionContent: {
+    flex: 1,
+  },
+  modeOptionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  modeOptionTitleSelected: {
+    color: '#007AFF',
+  },
+  modeOptionDescription: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  modeOptionDescriptionSelected: {
+    color: '#005AC1',
+  },
+  modeOptionRadio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    backgroundColor: '#FFFFFF',
+  },
+  modeOptionRadioSelected: {
+    borderColor: '#007AFF',
+    backgroundColor: '#007AFF',
   },
 });
 

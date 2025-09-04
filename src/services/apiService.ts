@@ -9,7 +9,7 @@
  */
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { ApiResponse, ApiError, ApiConfig, ZaptecDataDTO, SolisDataDTO, ChargerControlRequest, AutomationConfigRequest } from "../types";
+import { ApiResponse, ApiError, ApiConfig, ZaptecDataDTO, SolisDataDTO, ChargerControlRequest, AutomationConfig } from "../types";
 
 /**
  * ApiService Class
@@ -104,6 +104,18 @@ class ApiService {
     return response.data;
   }
 
+  /**
+   * Generic method for PUT requests
+   *
+   * @param endpoint API endpoint
+   * @param data Data to send in the body
+   * @returns Promise with typed response
+   */
+  private async put<T>(endpoint: string, data?: any): Promise<T> {
+    const response = await this.axiosInstance.put<T>(endpoint, data);
+    return response.data;
+  }
+
   // ========================================
   // SOLIS API METHODS (SOLAR INVERTER)
   // ========================================
@@ -139,11 +151,21 @@ class ApiService {
   /**
    * Change automation mode
    *
-   * @param mode Mode to activate ('manual', 'surplus')
+   * @param mode Mode to activate ('surplus', 'manual', 'minimum', 'force_minimum')
    * @returns Change confirmation
    */
-  async setAutomationMode(mode: "manual" | "surplus"): Promise<ApiResponse> {
-    return await this.post("/automation/config", { mode });
+  async setAutomationMode(mode: "surplus" | "manual" | "minimum" | "force_minimum"): Promise<ApiResponse> {
+    return await this.put("/automation/config", { mode });
+  }
+
+  /**
+   * Get current automation configuration
+   *
+   * @returns Current automation configuration
+   */
+  async getAutomationConfig(): Promise<AutomationConfig> {
+    const response = await this.get<AutomationConfig>("/automation/config");
+    return response;
   }
 
   /**
@@ -152,8 +174,8 @@ class ApiService {
    * @param config Configuration to apply
    * @returns Configuration confirmation
    */
-  async configureAutomation(config: AutomationConfigRequest): Promise<ApiResponse> {
-    return await this.post("/automation/config", config);
+  async configureAutomation(config: Partial<AutomationConfig>): Promise<ApiResponse> {
+    return await this.put("/automation/config", config);
   }
 
   /**
@@ -244,9 +266,7 @@ const getEnvVar = (envVar: string, extraKey: string, fallback: string = ""): str
 // Default configuration (loaded from environment variables or app.json)
 const simulationMode = getEnvVar(SIMULATION_MODE, "SIMULATION_MODE", "false") === "true";
 const defaultConfig: ApiConfig = {
-  baseUrl: simulationMode 
-    ? "http://localhost:3000" 
-    : getEnvVar(API_BASE_URL, "API_BASE_URL", "http://192.168.1.100:3000"),
+  baseUrl: simulationMode ? "http://localhost:3000" : getEnvVar(API_BASE_URL, "API_BASE_URL", "http://192.168.1.100:3000"),
   timeout: parseInt(getEnvVar(API_TIMEOUT, "API_TIMEOUT", "10000")),
   useHttps: getEnvVar(API_USE_HTTPS, "API_USE_HTTPS", "false") === "true",
   simulationMode: simulationMode,
