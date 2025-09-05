@@ -14,6 +14,8 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, ActivityIndi
 import { ZaptecDataDTO } from "../types";
 import { apiService } from "../services";
 
+// Removed chart components - now available in dedicated Charts screen
+
 /**
  * ZaptecScreen Component
  *
@@ -207,6 +209,13 @@ const ZaptecScreen: React.FC = () => {
           <Text style={styles.dataLabel}>Operating mode:</Text>
           <Text style={styles.dataValue}>{formatOperatingMode(zaptecStatus.operatingMode)}</Text>
         </View>
+      </View>
+
+      {/* Navigation Tip */}
+      <View style={styles.tipSection}>
+        <Text style={styles.tipText}>
+          📊 Consultez l'onglet "Charts" pour voir l'historique détaillé de consommation Zaptec
+        </Text>
       </View>
     </ScrollView>
   );
@@ -418,7 +427,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FFFFFF",
     fontWeight: "600"
-  }
+  },
+  tipSection: {
+    backgroundColor: "#E8F5E8",
+    marginTop: 20,
+    marginHorizontal: 16,
+    marginBottom: 20,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#28A745",
+  },
+  tipText: {
+    fontSize: 14,
+    color: "#155724",
+    textAlign: "center",
+    lineHeight: 20,
+  },
 });
 
 export default ZaptecScreen;

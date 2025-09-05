@@ -15,7 +15,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
 // Import screens
-import { HomeScreen, SolisScreen, ZaptecScreen, SettingsScreen } from '../screens';
+import { HomeScreen, SolisScreen, ZaptecScreen, ChartsScreen, SettingsScreen } from '../screens';
 
 // Navigation type definitions for TypeScript
 // This helps TypeScript verify that we pass the correct parameters during navigation
@@ -23,6 +23,7 @@ export type RootTabParamList = {
   Home: undefined;      // Home screen takes no parameters
   Solis: undefined;     // Solis screen takes no parameters
   Zaptec: undefined;    // Zaptec screen takes no parameters
+  Charts: undefined;    // Charts screen takes no parameters
   Settings: undefined;  // Settings screen takes no parameters
 };
 
@@ -85,6 +86,16 @@ function TabNavigator() {
         options={{
           title: 'Charger',
           tabBarIcon: ({ color, size }) => <Ionicons name="car" size={size} color={color} />
+        }}
+      />
+      
+      {/* Charts Tab - Energy charts */}
+      <Tab.Screen 
+        name="Charts" 
+        component={ChartsScreen}
+        options={{
+          title: 'Charts',
+          tabBarIcon: ({ color, size }) => <Ionicons name="bar-chart" size={size} color={color} />
         }}
       />
       

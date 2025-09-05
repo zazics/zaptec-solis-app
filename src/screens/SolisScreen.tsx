@@ -25,6 +25,8 @@ import {
 import { SolisDataDTO } from '../types';
 import { apiService } from '../services';
 
+// Removed chart components - now available in dedicated Charts screen
+
 // Get screen dimensions for charts
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -385,6 +387,13 @@ const SolisScreen: React.FC = () => {
           </Text>
         </View>
       </View>
+
+      {/* Navigation Tip */}
+      <View style={styles.tipSection}>
+        <Text style={styles.tipText}>
+          📊 Consultez l'onglet "Charts" pour voir les graphiques détaillés de production solaire, consommation et échanges réseau
+        </Text>
+      </View>
     </ScrollView>
   );
 };
@@ -550,6 +559,22 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'right',
     color: '#000000',
+  },
+  tipSection: {
+    backgroundColor: '#FFF3CD',
+    marginTop: 20,
+    marginHorizontal: 16,
+    marginBottom: 20,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  tipText: {
+    fontSize: 14,
+    color: '#B8860B',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

@@ -18,6 +18,8 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, ActivityIndi
 import { SolisDataDTO, ZaptecDataDTO } from "../types";
 import { apiService } from "../services";
 
+// Removed chart components - now available in dedicated Charts screen
+
 /**
  * HomeScreen Component
  *
@@ -97,6 +99,29 @@ const HomeScreen: React.FC = () => {
   };
 
   /**
+   * Get battery status icon based on power flow
+   * Charging: ⬆️ (positive power)
+   * Discharging: ⬇️ (negative power)
+   * Idle: ⏸️ (zero power)
+   */
+  const getBatteryStatusIcon = (): string => {
+    const batteryPower = solisData?.battery.power || 0;
+    if (batteryPower > 10) return "⬆️"; // Charging (with small threshold to avoid flickering)
+    if (batteryPower < -10) return "⬇️"; // Discharging
+    return "⏸️"; // Idle
+  };
+
+  /**
+   * Get battery status text
+   */
+  const getBatteryStatusText = (): string => {
+    const batteryPower = solisData?.battery.power || 0;
+    if (batteryPower > 10) return "Charging";
+    if (batteryPower < -10) return "Discharging";
+    return "Idle";
+  };
+
+  /**
    * Return a color based on a numeric value
    * Green for positive, red for negative, gray for zero
    */
@@ -166,15 +191,26 @@ const HomeScreen: React.FC = () => {
       {/* Header with title and last update */}
       <View style={styles.header}>
         <Text style={styles.title}>Zaptec-Solis System</Text>
-        {lastUpdate && <Text style={styles.lastUpdate}>Last Update: {lastUpdate.toLocaleTimeString("en-US")}</Text>}
+        {lastUpdate && (
+          <Text style={styles.lastUpdate}>
+            Dernière mise à jour:{" "}
+            {lastUpdate.toLocaleString("fr-BE", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit"
+            })}
+          </Text>
+        )}
       </View>
 
       {/* Solar Production Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>⚡ Solar Production</Text>
-        <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Total production:</Text>
-          <Text style={[styles.dataValue, { color: getColorForValue(solisData?.pv.totalPowerDC || 0) }]}>{formatPower(solisData?.pv.totalPowerDC || 0)}</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>⚡ Solar Production</Text>
+          <Text style={[styles.sectionValue, { color: getColorForValue(solisData?.pv.totalPowerDC || 0) }]}>{formatPower(solisData?.pv.totalPowerDC || 0)}</Text>
         </View>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>House consumption:</Text>
@@ -188,10 +224,16 @@ const HomeScreen: React.FC = () => {
 
       {/* Battery Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🔋 Battery</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>🔋 Battery</Text>
+          <View style={styles.batteryStatusContainer}>
+            <Text style={styles.batteryIcon}>{getBatteryStatusIcon()}</Text>
+            <Text style={styles.sectionValue}>{solisData?.battery.soc || 0}%</Text>
+          </View>
+        </View>
         <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Charge level:</Text>
-          <Text style={styles.dataValue}>{solisData?.battery.soc || 0}%</Text>
+          <Text style={styles.dataLabel}>Status:</Text>
+          <Text style={[styles.dataValue, { color: getColorForValue(solisData?.battery.power || 0) }]}>{getBatteryStatusText()}</Text>
         </View>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Battery power:</Text>
@@ -201,10 +243,9 @@ const HomeScreen: React.FC = () => {
 
       {/* Charger Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🚗 Zaptec Charger</Text>
-        <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Status:</Text>
-          <Text style={[styles.dataValue, { color: zaptecStatus?.online ? "#34C759" : "#FF3B30" }]}>{zaptecStatus?.online ? "Online" : "Offline"}</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>🚗 Zaptec Charger</Text>
+          <Text style={[styles.sectionValue, { color: zaptecStatus?.online ? "#34C759" : "#FF3B30" }]}>{zaptecStatus?.online ? "Online" : "Offline"}</Text>
         </View>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Charging in progress:</Text>
@@ -222,14 +263,18 @@ const HomeScreen: React.FC = () => {
 
       {/* Grid Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>🏠 Electrical Grid</Text>
-        <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Grid exchange:</Text>
-          <Text style={[styles.dataValue, { color: getColorForValue(solisData?.grid.activePower || 0) }]}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>🏠 Electrical Grid</Text>
+          <Text style={[styles.sectionValue, { color: getColorForValue(solisData?.grid.activePower || 0) }]}>
             {formatPower(solisData?.grid.activePower || 0)}
             <Text style={styles.unitExplanation}>{(solisData?.grid.activePower || 0) > 0 ? " (injection)" : " (consumption)"}</Text>
           </Text>
         </View>
+      </View>
+
+      {/* Navigation Tip */}
+      <View style={styles.tipSection}>
+        <Text style={styles.tipText}>📊 Consultez l'onglet "Charts" pour voir l'historique détaillé de vos données énergétiques</Text>
       </View>
     </ScrollView>
   );
@@ -293,11 +338,30 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3 // Shadow (Android)
   },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
     color: "#000000",
-    marginBottom: 12
+    flex: 1
+  },
+  sectionValue: {
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "right"
+  },
+  batteryStatusContainer: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  batteryIcon: {
+    fontSize: 18,
+    marginRight: 6
   },
   dataRow: {
     flexDirection: "row", // Horizontal layout
@@ -319,6 +383,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "normal",
     color: "#8E8E93"
+  },
+  tipSection: {
+    backgroundColor: "#E8F4FD",
+    marginTop: 20,
+    marginHorizontal: 16,
+    marginBottom: 20,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#007AFF"
+  },
+  tipText: {
+    fontSize: 14,
+    color: "#007AFF",
+    textAlign: "center",
+    lineHeight: 20
   }
 });
 
