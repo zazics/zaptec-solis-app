@@ -173,11 +173,15 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
       borderRadius: 16,
     },
     propsForDots: {
-      r: '3',
+      r: data.period === 'quarterly' ? '2' : '3', // Smaller dots for dense data
       strokeWidth: '1',
     },
     decimalPlaces: 0,
     formatYLabel: (value: string) => `${value}W`,
+    // Reduce label size for daily charts with many data points
+    propsForLabels: {
+      fontSize: data.period === 'quarterly' ? 8 : 12, // Smaller font for 15-min data
+    },
   };
 
   // Gestion du clic sur un point
@@ -218,6 +222,9 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
+      {data.solarProduction.length > 10 && (
+        <Text style={styles.tapHint}>💡 Tapez sur un point du graphique pour voir les détails</Text>
+      )}
       
       {/* Légende */}
       <View style={styles.legend}>
@@ -396,6 +403,13 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
     marginBottom: 12,
+  },
+  tapHint: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
   legend: {
     flexDirection: 'row',
