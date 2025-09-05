@@ -36,13 +36,12 @@ const ChartsScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"dashboard" | "solar" | "house" | "grid" | "zaptec">("dashboard");
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  // Chart data hooks - pass date only for daily period
-  const chartDate = selectedPeriod === "day" ? selectedDate : undefined;
-  const { data: dashboardData, loading: dashboardLoading, error: dashboardError, refreshData: refreshDashboard } = useDashboardChartData(selectedPeriod, chartDate);
-  const { data: solarData, loading: solarLoading, error: solarError, refreshData: refreshSolar } = useSolarProductionChartData(selectedPeriod, chartDate);
-  const { data: houseData, loading: houseLoading, error: houseError, refreshData: refreshHouse } = useHouseConsumptionChartData(selectedPeriod, chartDate);
-  const { data: gridData, loading: gridLoading, error: gridError, refreshData: refreshGrid } = useGridExchangeChartData(selectedPeriod, chartDate);
-  const { data: zaptecData, loading: zaptecLoading, error: zaptecError, refreshData: refreshZaptec } = useZaptecConsumptionChartData(selectedPeriod, chartDate);
+  // Chart data hooks - pass date for all periods now
+  const { data: dashboardData, loading: dashboardLoading, error: dashboardError, refreshData: refreshDashboard } = useDashboardChartData(selectedPeriod, selectedDate);
+  const { data: solarData, loading: solarLoading, error: solarError, refreshData: refreshSolar } = useSolarProductionChartData(selectedPeriod, selectedDate);
+  const { data: houseData, loading: houseLoading, error: houseError, refreshData: refreshHouse } = useHouseConsumptionChartData(selectedPeriod, selectedDate);
+  const { data: gridData, loading: gridLoading, error: gridError, refreshData: refreshGrid } = useGridExchangeChartData(selectedPeriod, selectedDate);
+  const { data: zaptecData, loading: zaptecLoading, error: zaptecError, refreshData: refreshZaptec } = useZaptecConsumptionChartData(selectedPeriod, selectedDate);
 
   // ========================================
   // FUNCTIONS
@@ -53,14 +52,12 @@ const ChartsScreen: React.FC = () => {
    */
   const handlePeriodChange = (period: "day" | "week" | "month" | "year"): void => {
     setSelectedPeriod(period);
-    // Reset to today when changing period
-    if (period === "day") {
-      setSelectedDate(new Date().toISOString().split("T")[0]);
-    }
+    // Reset to today when changing period for all periods
+    setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
   /**
-   * Handle date change for daily navigation
+   * Handle date change for period navigation (all periods)
    */
   const handleDateChange = (date: string): void => {
     setSelectedDate(date);
@@ -197,7 +194,7 @@ const ChartsScreen: React.FC = () => {
       </View>
 
       {/* Period Selector */}
-      <PeriodSelector selectedPeriod={selectedPeriod} onPeriodChange={handlePeriodChange} selectedDate={selectedPeriod === "day" ? selectedDate : undefined} onDateChange={selectedPeriod === "day" ? handleDateChange : undefined} />
+      <PeriodSelector selectedPeriod={selectedPeriod} onPeriodChange={handlePeriodChange} selectedDate={selectedDate} onDateChange={handleDateChange} />
 
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>

@@ -22,33 +22,63 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   onDateChange
 }) => {
   /**
-   * Navigate to previous day
+   * Navigate to previous period
    */
-  const goToPreviousDay = () => {
+  const goToPreviousPeriod = () => {
     if (!selectedDate || !onDateChange) return;
     
     const currentDate = new Date(selectedDate);
-    currentDate.setDate(currentDate.getDate() - 1);
+    
+    switch (selectedPeriod) {
+      case 'day':
+        currentDate.setDate(currentDate.getDate() - 1);
+        break;
+      case 'week':
+        currentDate.setDate(currentDate.getDate() - 7);
+        break;
+      case 'month':
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        break;
+      case 'year':
+        currentDate.setFullYear(currentDate.getFullYear() - 1);
+        break;
+    }
+    
     const newDate = currentDate.toISOString().split('T')[0];
     onDateChange(newDate);
   };
 
   /**
-   * Navigate to next day
+   * Navigate to next period
    */
-  const goToNextDay = () => {
+  const goToNextPeriod = () => {
     if (!selectedDate || !onDateChange) return;
     
     const currentDate = new Date(selectedDate);
-    currentDate.setDate(currentDate.getDate() + 1);
+    
+    switch (selectedPeriod) {
+      case 'day':
+        currentDate.setDate(currentDate.getDate() + 1);
+        break;
+      case 'week':
+        currentDate.setDate(currentDate.getDate() + 7);
+        break;
+      case 'month':
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        break;
+      case 'year':
+        currentDate.setFullYear(currentDate.getFullYear() + 1);
+        break;
+    }
+    
     const newDate = currentDate.toISOString().split('T')[0];
     onDateChange(newDate);
   };
 
   /**
-   * Go to today
+   * Go to current period (today)
    */
-  const goToToday = () => {
+  const goToCurrentPeriod = () => {
     if (!onDateChange) return;
     
     const today = new Date().toISOString().split('T')[0];
@@ -56,68 +86,134 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({
   };
 
   /**
-   * Format date for display
+   * Format date for display based on selected period
    */
   const formatDateForDisplay = (dateStr: string): string => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('fr-FR', { 
-      weekday: 'short', 
-      day: 'numeric', 
-      month: 'short',
-      year: 'numeric'
-    });
+    
+    switch (selectedPeriod) {
+      case 'day':
+        return date.toLocaleDateString('fr-FR', { 
+          weekday: 'short', 
+          day: 'numeric', 
+          month: 'short',
+          year: 'numeric'
+        });
+      case 'week':
+        // Calculate week start (Monday)
+        const dayOfWeek = date.getDay();
+        const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - daysToMonday);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        
+        return `${weekStart.getDate()}/${weekStart.getMonth() + 1} - ${weekEnd.getDate()}/${weekEnd.getMonth() + 1}/${weekEnd.getFullYear()}`;
+      case 'month':
+        return date.toLocaleDateString('fr-FR', { 
+          month: 'long',
+          year: 'numeric'
+        });
+      case 'year':
+        return date.getFullYear().toString();
+      default:
+        return dateStr;
+    }
   };
 
   /**
-   * Check if the selected date is today
+   * Check if the selected date is in current period
    */
-  const isToday = (): boolean => {
+  const isCurrentPeriod = (): boolean => {
     if (!selectedDate) return true;
-    const today = new Date().toISOString().split('T')[0];
-    return selectedDate === today;
+    
+    const selectedDateObj = new Date(selectedDate);
+    const today = new Date();
+    
+    switch (selectedPeriod) {
+      case 'day':
+        return selectedDate === today.toISOString().split('T')[0];
+      case 'week':
+        // Check if selected date is in current week
+        const startOfWeek = new Date(today);
+        const dayOfWeek = today.getDay();
+        const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        startOfWeek.setDate(today.getDate() - daysToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        
+        return selectedDateObj >= startOfWeek && selectedDateObj <= endOfWeek;
+      case 'month':
+        return selectedDateObj.getMonth() === today.getMonth() && 
+               selectedDateObj.getFullYear() === today.getFullYear();
+      case 'year':
+        return selectedDateObj.getFullYear() === today.getFullYear();
+      default:
+        return false;
+    }
   };
 
   /**
    * Check if the selected date is in the future
    */
-  const isFutureDate = (): boolean => {
+  const isFuturePeriod = (): boolean => {
     if (!selectedDate) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return selectedDate > today;
+    
+    const selectedDateObj = new Date(selectedDate);
+    const today = new Date();
+    
+    switch (selectedPeriod) {
+      case 'day':
+        return selectedDate > today.toISOString().split('T')[0];
+      case 'week':
+        // Check if selected date's week is in the future
+        return selectedDateObj > today;
+      case 'month':
+        const thisMonth = today.getFullYear() * 12 + today.getMonth();
+        const selectedMonth = selectedDateObj.getFullYear() * 12 + selectedDateObj.getMonth();
+        return selectedMonth > thisMonth;
+      case 'year':
+        return selectedDateObj.getFullYear() > today.getFullYear();
+      default:
+        return false;
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>Période d'affichage</Text>
       
-      {/* Date navigation for daily view */}
-      {selectedPeriod === 'day' && selectedDate && onDateChange && (
+      {/* Period navigation for all periods */}
+      {selectedDate && onDateChange && (
         <View style={styles.dateNavigation}>
           <TouchableOpacity 
             style={styles.navButton}
-            onPress={goToPreviousDay}
+            onPress={goToPreviousPeriod}
           >
             <Text style={styles.navButtonText}>←</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={[styles.dateDisplay, !isToday() && styles.dateDisplayPast]}
-            onPress={goToToday}
+            style={[styles.dateDisplay, !isCurrentPeriod() && styles.dateDisplayPast]}
+            onPress={goToCurrentPeriod}
           >
-            <Text style={[styles.dateText, !isToday() && styles.dateTextPast]}>
+            <Text style={[styles.dateText, !isCurrentPeriod() && styles.dateTextPast]}>
               {formatDateForDisplay(selectedDate)}
             </Text>
-            {!isToday() && (
-              <Text style={styles.todayHint}>Tap for today</Text>
+            {!isCurrentPeriod() && (
+              <Text style={styles.todayHint}>Tap for current</Text>
             )}
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={[styles.navButton, isFutureDate() && styles.navButtonDisabled]}
-            onPress={goToNextDay}
-            disabled={isFutureDate()}
+            style={[styles.navButton, isFuturePeriod() && styles.navButtonDisabled]}
+            onPress={goToNextPeriod}
+            disabled={isFuturePeriod()}
           >
-            <Text style={[styles.navButtonText, isFutureDate() && styles.navButtonTextDisabled]}>→</Text>
+            <Text style={[styles.navButtonText, isFuturePeriod() && styles.navButtonTextDisabled]}>→</Text>
           </TouchableOpacity>
         </View>
       )}

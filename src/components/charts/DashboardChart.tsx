@@ -97,7 +97,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
         } else if (data.period === 'daily') {
           return `${date.getDate()}/${date.getMonth() + 1}`;
         } else if (data.period === 'monthly') {
-          return `${date.getMonth() + 1}/${date.getFullYear().toString().slice(-2)}`;
+          return date.toLocaleDateString('fr-FR', { month: 'short' });
         }
         return date.toLocaleDateString('fr-FR');
       });

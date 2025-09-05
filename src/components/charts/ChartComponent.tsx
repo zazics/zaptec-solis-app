@@ -95,8 +95,8 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
         // Affichage par jour
         return `${date.getDate()}/${date.getMonth() + 1}`;
       } else if (period === "monthly") {
-        // Affichage par mois
-        return `${date.getMonth() + 1}/${date.getFullYear().toString().slice(-2)}`;
+        // Affichage par mois avec nom du mois
+        return date.toLocaleDateString("fr-FR", { month: "short" });
       } else {
         // Fallback : détecter le type de données par longueur
         if (data.length > 80) {
