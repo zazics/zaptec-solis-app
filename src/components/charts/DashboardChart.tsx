@@ -4,8 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, ScrollView } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import Slider from '@react-native-community/slider';
 import { DashboardChartData } from '../../types/chart.types';
 
 const screenWidth = Dimensions.get('window').width;
@@ -23,16 +24,8 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
   height = 250,
   totalSolarEnergyKwh
 }) => {
-  // État pour gérer les détails du point sélectionné
-  const [selectedPoint, setSelectedPoint] = useState<{
-    solar: number;
-    house: number;
-    zaptec: number;
-    gridImport: number;
-    timestamp: Date;
-    index: number;
-  } | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  // État pour gérer le point sélectionné via slider
+  const [selectedIndex, setSelectedIndex] = useState<number>(data.solarProduction.length > 0 ? data.solarProduction.length - 1 : 0);
 
   // Calculer les paramètres d'échantillonnage
   const calculateSamplingParams = () => {
@@ -184,25 +177,33 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
     },
   };
 
-  // Gestion du clic sur un point
-  const handleDataPointClick = (dataPoint: any) => {
-    const originalDataIndex = dataPoint.index * step;
-    
-    if (originalDataIndex < data.solarProduction.length) {
-      const solarPoint = data.solarProduction[originalDataIndex];
-      const housePoint = data.houseConsumption[originalDataIndex];
-      const zaptecPoint = data.zaptecConsumption[originalDataIndex];
-      const gridImportPoint = data.gridImported[originalDataIndex];
+  // Obtenir le point sélectionné
+  const getSelectedPoint = () => {
+    if (selectedIndex >= 0 && selectedIndex < data.solarProduction.length) {
+      const solarPoint = data.solarProduction[selectedIndex];
+      const housePoint = data.houseConsumption[selectedIndex];
+      const zaptecPoint = data.zaptecConsumption[selectedIndex];
+      const gridImportPoint = data.gridImported[selectedIndex];
       
-      setSelectedPoint({
+      return {
         solar: Math.round(solarPoint?.value || 0),
         house: Math.round(housePoint?.value || 0),
         zaptec: Math.round(zaptecPoint?.value || 0),
         gridImport: Math.round(gridImportPoint?.value || 0),
         timestamp: solarPoint.timestamp,
-        index: dataPoint.index
-      });
-      setShowModal(true);
+        index: selectedIndex
+      };
+    }
+    return null;
+  };
+
+  const selectedPoint = getSelectedPoint();
+
+  // Gestion du clic sur un point pour positionner le slider
+  const handleDataPointClick = (dataPoint: any) => {
+    const originalDataIndex = dataPoint.index * step;
+    if (originalDataIndex < data.solarProduction.length) {
+      setSelectedIndex(originalDataIndex);
     }
   };
 
@@ -222,8 +223,22 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      {data.solarProduction.length > 10 && (
-        <Text style={styles.tapHint}>💡 Tapez sur un point du graphique pour voir les détails</Text>
+      
+      {/* Navigation par slider si on a des données */}
+      {data.solarProduction.length > 1 && (
+        <View style={styles.sliderContainer}>
+          <Text style={styles.sliderHint}>📍 Naviguez avec le curseur ou tapez sur un point du graphique</Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={Math.max(0, data.solarProduction.length - 1)}
+            step={1}
+            value={selectedIndex}
+            onValueChange={(value) => setSelectedIndex(Math.round(value))}
+            minimumTrackTintColor="#007AFF"
+            maximumTrackTintColor="#E0E0E0"
+          />
+        </View>
       )}
       
       {/* Légende */}
@@ -266,9 +281,58 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
           withVerticalLabels={true}
           withHorizontalLabels={true}
           fromZero={true}
+          withShadow={false}
+          withDots={true}
           onDataPointClick={handleDataPointClick}
         />
       </ScrollView>
+      
+      {/* Détails du point sélectionné */}
+      {selectedPoint && (
+        <View style={styles.selectedPointContainer}>
+          <Text style={styles.selectedPointTitle}>📊 Point sélectionné ({selectedIndex + 1}/{data.solarProduction.length})</Text>
+          <View style={styles.selectedPointDetails}>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Date/Heure :</Text>
+              <Text style={styles.detailValue}>
+                {formatDateTime(selectedPoint.timestamp)}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: 'rgba(255, 193, 7, 1)' }]}>☀️ Production :</Text>
+              <Text style={[styles.detailValue, { color: 'rgba(255, 193, 7, 1)' }]}>
+                {selectedPoint.solar} W
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: 'rgba(0, 123, 255, 1)' }]}>🏠 Maison :</Text>
+              <Text style={[styles.detailValue, { color: 'rgba(0, 123, 255, 1)' }]}>
+                {selectedPoint.house} W
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: 'rgba(40, 167, 69, 1)' }]}>🚗 Zaptec :</Text>
+              <Text style={[styles.detailValue, { color: 'rgba(40, 167, 69, 1)' }]}>
+                {selectedPoint.zaptec} W
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: 'rgba(220, 53, 69, 1)' }]}>🔌 Import :</Text>
+              <Text style={[styles.detailValue, { color: 'rgba(220, 53, 69, 1)' }]}>
+                {selectedPoint.gridImport} W
+              </Text>
+            </View>
+            {totalSolarEnergyKwh !== undefined && (
+              <View style={styles.detailRow}>
+                <Text style={[styles.detailLabel, { color: 'rgba(255, 193, 7, 1)' }]}>☀️ Total période :</Text>
+                <Text style={[styles.detailValue, { color: 'rgba(255, 193, 7, 1)' }]}>
+                  {totalSolarEnergyKwh.toFixed(1)} kWh
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
 
       {/* Statistiques rapides */}
       {data.solarProduction.length > 0 && (
@@ -302,81 +366,6 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
         </View>
       )}
 
-      {/* Modal pour les détails du point */}
-      <Modal
-        visible={showModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Vue d'ensemble - Détails</Text>
-            
-            {selectedPoint && (
-              <>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Date/Heure :</Text>
-                  <Text style={styles.detailValue}>
-                    {formatDateTime(selectedPoint.timestamp)}
-                  </Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: 'rgba(255, 193, 7, 1)' }]}>☀️ Production :</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedPoint.solar} W
-                  </Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: 'rgba(0, 123, 255, 1)' }]}>🏠 Maison :</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedPoint.house} W
-                  </Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: 'rgba(40, 167, 69, 1)' }]}>🚗 Zaptec :</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedPoint.zaptec} W
-                  </Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: 'rgba(220, 53, 69, 1)' }]}>🔌 Import :</Text>
-                  <Text style={styles.detailValue}>
-                    {selectedPoint.gridImport} W
-                  </Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Position :</Text>
-                  <Text style={styles.detailValue}>
-                    Point #{selectedPoint.index + 1}
-                  </Text>
-                </View>
-                
-                {totalSolarEnergyKwh !== undefined && (
-                  <View style={styles.detailRow}>
-                    <Text style={[styles.detailLabel, { color: 'rgba(255, 193, 7, 1)' }]}>☀️ Total période :</Text>
-                    <Text style={styles.detailValue}>
-                      {totalSolarEnergyKwh.toFixed(1)} kWh
-                    </Text>
-                  </View>
-                )}
-              </>
-            )}
-            
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => setShowModal(false)}
-            >
-              <Text style={styles.closeButtonText}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -404,12 +393,39 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
-  tapHint: {
+  sliderContainer: {
+    marginVertical: 12,
+    paddingHorizontal: 8,
+  },
+  sliderHint: {
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
     marginBottom: 8,
     fontStyle: 'italic',
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  selectedPointContainer: {
+    backgroundColor: '#F8F9FA',
+    marginVertical: 12,
+    marginHorizontal: 4,
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  selectedPointTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  selectedPointDetails: {
+    gap: 4,
   },
   legend: {
     flexDirection: 'row',
@@ -466,38 +482,11 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 20,
-    marginHorizontal: 20,
-    minWidth: 300,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    paddingVertical: 4,
   },
   detailLabel: {
     fontSize: 14,
@@ -511,20 +500,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'right',
     flex: 1,
-    marginLeft: 12,
-  },
-  closeButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginTop: 16,
-    alignSelf: 'center',
-  },
-  closeButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+    marginLeft: 12
   },
 });
 

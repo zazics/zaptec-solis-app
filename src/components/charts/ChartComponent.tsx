@@ -3,8 +3,9 @@
  */
 
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity, Modal } from "react-native";
+import { View, Text, StyleSheet, Dimensions, ScrollView } from "react-native";
 import { LineChart, BarChart } from "react-native-chart-kit";
+import Slider from '@react-native-community/slider';
 import { ChartDataPoint } from "../../types/chart.types";
 
 const screenWidth = Dimensions.get("window").width;
@@ -22,13 +23,8 @@ interface ChartComponentProps {
 }
 
 const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, unit = "W", chartType = "line", height = 220, showValues = false, period, totalEnergy }) => {
-  // État pour gérer les détails du point sélectionné
-  const [selectedPoint, setSelectedPoint] = useState<{
-    value: number;
-    timestamp: Date;
-    index: number;
-  } | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  // État pour gérer le point sélectionné via slider
+  const [selectedIndex, setSelectedIndex] = useState<number>(data.length > 0 ? data.length - 1 : 0);
 
   // Calculer les paramètres d'échantillonnage
   const calculateSamplingParams = () => {
@@ -137,6 +133,14 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
 
   const chartData = prepareChartData();
 
+  // Gestion du clic sur un point pour positionner le slider
+  const handleDataPointClick = (dataPoint: any) => {
+    const originalDataIndex = dataPoint.index * step;
+    if (originalDataIndex < data.length) {
+      setSelectedIndex(originalDataIndex);
+    }
+  };
+
   // Calculer la largeur du graphique basée sur le nombre de points
   const calculateChartWidth = () => {
     const minWidth = screenWidth - 32; // Largeur minimum
@@ -170,21 +174,6 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
     },
   };
 
-  // Gestion du clic sur un point
-  const handleDataPointClick = (dataPoint: any) => {
-    const originalDataIndex = dataPoint.index * step; // Retrouver l'index dans les données originales
-    const originalPoint = data[originalDataIndex];
-
-    if (originalPoint) {
-      setSelectedPoint({
-        value: originalPoint.value,
-        timestamp: originalPoint.timestamp,
-        index: dataPoint.index
-      });
-      setShowModal(true);
-    }
-  };
-
   // Formatage de la date pour l'affichage
   const formatDateTime = (date: Date): string => {
     const options: Intl.DateTimeFormatOptions = {
@@ -198,14 +187,32 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
     return date.toLocaleString("fr-FR", options);
   };
 
+  // Obtenir le point sélectionné
+  const selectedPoint = data[selectedIndex];
+
   const Chart = chartType === "line" ? LineChart : BarChart;
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      {data.length > 10 && (
-        <Text style={styles.tapHint}>💡 Tapez sur un point du graphique pour voir les détails</Text>
+      
+      {/* Navigation par slider si on a des données */}
+      {data.length > 1 && (
+        <View style={styles.sliderContainer}>
+          <Text style={styles.sliderHint}>📍 Naviguez avec le curseur ou tapez sur un point du graphique</Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={Math.max(0, data.length - 1)}
+            step={1}
+            value={selectedIndex}
+            onValueChange={(value) => setSelectedIndex(Math.round(value))}
+            minimumTrackTintColor={color}
+            maximumTrackTintColor="#E0E0E0"
+          />
+        </View>
       )}
+      
       <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.chartScrollView} contentContainerStyle={styles.chartScrollContent}>
         <Chart
           data={chartData}
@@ -221,11 +228,32 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
           withVerticalLabels={true}
           withHorizontalLabels={true}
           fromZero={true}
-          onDataPointClick={handleDataPointClick}
           withShadow={false}
           withDots={true}
+          onDataPointClick={handleDataPointClick}
         />
       </ScrollView>
+      {/* Détails du point sélectionné */}
+      {selectedPoint && (
+        <View style={styles.selectedPointContainer}>
+          <Text style={styles.selectedPointTitle}>📊 Point sélectionné ({selectedIndex + 1}/{data.length})</Text>
+          <View style={styles.selectedPointDetails}>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Valeur :</Text>
+              <Text style={[styles.detailValue, { color }]}>
+                {Math.round(selectedPoint.value)} {unit}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Date/Heure :</Text>
+              <Text style={styles.detailValue}>
+                {formatDateTime(selectedPoint.timestamp)}
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
+
       {showValues && data.length > 0 && (
         <View style={styles.statsContainer}>
           {totalEnergy !== undefined && (
@@ -257,47 +285,6 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
           </View>
         </View>
       )}
-
-      {/* Modal pour les détails du point */}
-      <Modal visible={showModal} transparent={true} animationType="fade" onRequestClose={() => setShowModal(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Détails du point</Text>
-
-            {selectedPoint && (
-              <>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Valeur :</Text>
-                  <Text style={styles.detailValue}>
-                    {Math.round(selectedPoint.value)} {unit}
-                  </Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Date/Heure :</Text>
-                  <Text style={styles.detailValue}>{formatDateTime(selectedPoint.timestamp)}</Text>
-                </View>
-
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Position :</Text>
-                  <Text style={styles.detailValue}>Point #{selectedPoint.index + 1}</Text>
-                </View>
-
-                {totalEnergy !== undefined && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Total période :</Text>
-                    <Text style={styles.detailValue}>{totalEnergy.toFixed(1)} kWh</Text>
-                  </View>
-                )}
-              </>
-            )}
-
-            <TouchableOpacity style={styles.closeButton} onPress={() => setShowModal(false)}>
-              <Text style={styles.closeButtonText}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
@@ -325,12 +312,39 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 12
   },
-  tapHint: {
+  sliderContainer: {
+    marginVertical: 12,
+    paddingHorizontal: 8,
+  },
+  sliderHint: {
     fontSize: 12,
     color: "#666",
     textAlign: "center",
     marginBottom: 8,
     fontStyle: "italic",
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  selectedPointContainer: {
+    backgroundColor: "#F8F9FA",
+    marginVertical: 12,
+    marginHorizontal: 4,
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  selectedPointTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  selectedPointDetails: {
+    gap: 4,
   },
   chartScrollView: {
     marginVertical: 8
@@ -362,43 +376,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333"
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-  modalContent: {
-    backgroundColor: "#ffffff",
-    borderRadius: 16,
-    padding: 20,
-    marginHorizontal: 20,
-    minWidth: 280,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    textAlign: "center",
-    marginBottom: 16
-  },
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0"
+    paddingVertical: 4,
   },
   detailLabel: {
     fontSize: 14,
     color: "#666",
-    fontWeight: "500"
+    fontWeight: "500",
+    flex: 1,
   },
   detailValue: {
     fontSize: 14,
@@ -407,19 +395,6 @@ const styles = StyleSheet.create({
     textAlign: "right",
     flex: 1,
     marginLeft: 12
-  },
-  closeButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    marginTop: 16,
-    alignSelf: "center"
-  },
-  closeButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "600"
   }
 });
 

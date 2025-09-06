@@ -100,14 +100,14 @@ const HomeScreen: React.FC = () => {
 
   /**
    * Get battery status icon based on power flow
-   * Charging: ⬆️ (positive power)
-   * Discharging: ⬇️ (negative power)
+   * Charging: ⬆️ (negative power - energy going into battery)
+   * Discharging: ⬇️ (positive power - energy coming out of battery)
    * Idle: ⏸️ (zero power)
    */
   const getBatteryStatusIcon = (): string => {
     const batteryPower = solisData?.battery.power || 0;
-    if (batteryPower > 10) return "⬆️"; // Charging (with small threshold to avoid flickering)
-    if (batteryPower < -10) return "⬇️"; // Discharging
+    if (batteryPower < 0) return "⬆️"; // Charging (negative = energy into battery)
+    if (batteryPower > 0) return "⬇️"; // Discharging (positive = energy out of battery)
     return "⏸️"; // Idle
   };
 
@@ -116,8 +116,8 @@ const HomeScreen: React.FC = () => {
    */
   const getBatteryStatusText = (): string => {
     const batteryPower = solisData?.battery.power || 0;
-    if (batteryPower > 10) return "Charging";
-    if (batteryPower < -10) return "Discharging";
+    if (batteryPower < 0) return "Charging";
+    if (batteryPower > 0) return "Discharging";
     return "Idle";
   };
 

@@ -15,12 +15,12 @@ import { AutomationConfig } from '../types';
 
 const SettingsScreen: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [isIpModalVisible, setIsIpModalVisible] = useState(false);
-  const [isApiKeyModalVisible, setIsApiKeyModalVisible] = useState(false);
+  const [isConnectionModalVisible, setIsConnectionModalVisible] = useState(false);
   const [isModeModalVisible, setIsModeModalVisible] = useState(false);
+  const [isPriorityLoadModalVisible, setIsPriorityLoadModalVisible] = useState(false);
   const [newIp, setNewIp] = useState('');
   const [newPort, setNewPort] = useState('3000');
-  const [newApiKey, setNewApiKey] = useState('');
+  const [newPriorityLoadReserve, setNewPriorityLoadReserve] = useState<number>(0);
   const [currentApiConfig, setCurrentApiConfig] = useState(apiService.getConfig());
   const [automationConfig, setAutomationConfig] = useState<AutomationConfig | null>(null);
   const [selectedMode, setSelectedMode] = useState<'surplus' | 'manual' | 'minimum' | 'force_minimum'>('surplus');
@@ -55,6 +55,7 @@ const SettingsScreen: React.FC = () => {
       const config = await apiService.getAutomationConfig();
       setAutomationConfig(config);
       setSelectedMode(config.mode);
+      setNewPriorityLoadReserve(config.priorityLoadReserve);
     } catch (error) {
       console.error('Erreur lors du chargement de la configuration d\'automatisation:', error);
     }
@@ -93,7 +94,7 @@ const SettingsScreen: React.FC = () => {
       apiService.updateConfig(newApiConfig);
       setCurrentApiConfig(newApiConfig);
       
-      setIsIpModalVisible(false);
+      setIsConnectionModalVisible(false);
       setConnectionStatus('unknown');
       Alert.alert('Succès', 'Configuration IP sauvegardée');
     } catch (error) {
@@ -126,61 +127,26 @@ const SettingsScreen: React.FC = () => {
   };
 
 
-  const openIpModal = () => {
+  const openConnectionModal = () => {
     const { ip, port } = settingsService.parseBackendUrl(currentApiConfig.baseUrl);
     setNewIp(ip);
     setNewPort(port.toString());
-    setIsIpModalVisible(true);
+    setIsConnectionModalVisible(true);
   };
 
-  const openApiKeyModal = () => {
-    setNewApiKey(currentApiConfig.apiKey || '');
-    setIsApiKeyModalVisible(true);
-  };
-
-  const saveApiKeyConfiguration = async () => {
-    try {
-      setIsLoading(true);
-      const newApiConfig = await settingsService.setCustomApiKey(newApiKey.trim());
-      
-      // Mettre à jour la configuration de l'API service
-      apiService.updateConfig(newApiConfig);
-      setCurrentApiConfig(newApiConfig);
-      
-      setIsApiKeyModalVisible(false);
-      setConnectionStatus('unknown');
-      Alert.alert('Succès', 'Clé API sauvegardée');
-    } catch (error) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetApiKeyToDefault = async () => {
-    try {
-      setIsLoading(true);
-      const defaultConfig = await settingsService.resetToDefaultApiKey();
-      
-      // Mettre à jour la configuration de l'API service
-      apiService.updateConfig(defaultConfig);
-      setCurrentApiConfig(defaultConfig);
-      
-      setNewApiKey(defaultConfig.apiKey || '');
-      setConnectionStatus('unknown');
-      Alert.alert('Succès', 'Clé API réinitialisée à la valeur par défaut');
-    } catch (error) {
-      Alert.alert('Erreur', 'Erreur lors de la réinitialisation');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const openModeModal = () => {
     if (automationConfig) {
       setSelectedMode(automationConfig.mode);
     }
     setIsModeModalVisible(true);
+  };
+
+  const openPriorityLoadModal = () => {
+    if (automationConfig) {
+      setNewPriorityLoadReserve(automationConfig.priorityLoadReserve);
+    }
+    setIsPriorityLoadModalVisible(true);
   };
 
   const saveModeConfiguration = async () => {
@@ -190,6 +156,20 @@ const SettingsScreen: React.FC = () => {
       await loadAutomationConfig(); // Recharger la configuration
       setIsModeModalVisible(false);
       Alert.alert('Succès', `Mode ${getModeLabel(selectedMode)} activé`);
+    } catch (error) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const savePriorityLoadConfiguration = async () => {
+    try {
+      setIsLoading(true);
+      await apiService.configureAutomation({ priorityLoadReserve: newPriorityLoadReserve });
+      await loadAutomationConfig(); // Recharger la configuration
+      setIsPriorityLoadModalVisible(false);
+      Alert.alert('Succès', `Réserve de puissance prioritaire définie à ${newPriorityLoadReserve}W`);
     } catch (error) {
       Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
     } finally {
@@ -227,34 +207,6 @@ const SettingsScreen: React.FC = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Configuration serveur</Text>
         
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={openIpModal}
-        >
-          <View style={styles.settingItemContent}>
-            <View style={styles.settingItemText}>
-              <Text style={styles.settingItemTitle}>Adresse du backend</Text>
-              <Text style={styles.settingItemSubtitle}>{currentApiConfig.baseUrl}</Text>
-            </View>
-            <Text style={styles.settingItemArrow}>›</Text>
-          </View>
-        </TouchableOpacity>
-
-
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={openApiKeyModal}
-        >
-          <View style={styles.settingItemContent}>
-            <View style={styles.settingItemText}>
-              <Text style={styles.settingItemTitle}>Clé API</Text>
-              <Text style={styles.settingItemSubtitle}>
-                {currentApiConfig.apiKey || 'Non configurée'}
-              </Text>
-            </View>
-            <Text style={styles.settingItemArrow}>›</Text>
-          </View>
-        </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.settingItem}
@@ -274,7 +226,23 @@ const SettingsScreen: React.FC = () => {
 
         <TouchableOpacity 
           style={styles.settingItem}
-          onPress={testConnection}
+          onPress={openPriorityLoadModal}
+          disabled={isLoading || !automationConfig}
+        >
+          <View style={styles.settingItemContent}>
+            <View style={styles.settingItemText}>
+              <Text style={styles.settingItemTitle}>Réserve de puissance prioritaire</Text>
+              <Text style={styles.settingItemSubtitle}>
+                {automationConfig ? `${automationConfig.priorityLoadReserve}W` : 'Chargement...'}
+              </Text>
+            </View>
+            <Text style={styles.settingItemArrow}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={openConnectionModal}
           disabled={isLoading}
         >
           <View style={styles.settingItemContent}>
@@ -288,7 +256,7 @@ const SettingsScreen: React.FC = () => {
                 {isLoading ? 'Test en cours...' : 
                  connectionStatus === 'connected' ? 'Connexion OK' :
                  connectionStatus === 'failed' ? 'Connexion échouée' :
-                 'Vérifier la communication'}
+                 'Configurer et tester la connexion'}
               </Text>
             </View>
             <Text style={styles.settingItemArrow}>›</Text>
@@ -344,14 +312,14 @@ const SettingsScreen: React.FC = () => {
       </View>
 
       <Modal
-        visible={isIpModalVisible}
+        visible={isConnectionModalVisible}
         transparent={true}
         animationType="slide"
-        onRequestClose={() => setIsIpModalVisible(false)}
+        onRequestClose={() => setIsConnectionModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Configuration serveur</Text>
+            <Text style={styles.modalTitle}>Configuration et test de connexion</Text>
             
             <Text style={styles.modalLabel}>Adresse IP</Text>
             <TextInput
@@ -375,13 +343,37 @@ const SettingsScreen: React.FC = () => {
               URL finale : http://{newIp || '192.168.0.108'}:{newPort || '3000'}
             </Text>
             
+            {/* Status de connexion */}
+            <View style={styles.connectionStatus}>
+              <Text style={[
+                styles.connectionStatusText,
+                connectionStatus === 'connected' && { color: '#34C759' },
+                connectionStatus === 'failed' && { color: '#FF3B30' }
+              ]}>
+                {isLoading ? '🔄 Test en cours...' : 
+                 connectionStatus === 'connected' ? '✅ Connexion réussie' :
+                 connectionStatus === 'failed' ? '❌ Connexion échouée' :
+                 '⚪ Prêt à tester'}
+              </Text>
+            </View>
+            
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setIsIpModalVisible(false)}
+                onPress={() => setIsConnectionModalVisible(false)}
                 disabled={isLoading}
               >
                 <Text style={styles.modalButtonCancelText}>Annuler</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonTest]}
+                onPress={testConnection}
+                disabled={isLoading}
+              >
+                <Text style={styles.modalButtonTestText}>
+                  {isLoading ? 'Test...' : 'Tester'}
+                </Text>
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -398,56 +390,6 @@ const SettingsScreen: React.FC = () => {
         </View>
       </Modal>
 
-      <Modal
-        visible={isApiKeyModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsApiKeyModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Configuration clé API</Text>
-            
-            <Text style={styles.modalLabel}>Clé API</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={newApiKey}
-              onChangeText={setNewApiKey}
-              placeholder="Entrez la clé API"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setIsApiKeyModalVisible(false)}
-                disabled={isLoading}
-              >
-                <Text style={styles.modalButtonCancelText}>Annuler</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonDefault]}
-                onPress={resetApiKeyToDefault}
-                disabled={isLoading}
-              >
-                <Text style={styles.modalButtonDefaultText}>Défaut</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={saveApiKeyConfiguration}
-                disabled={isLoading}
-              >
-                <Text style={styles.modalButtonConfirmText}>
-                  {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       <Modal
         visible={isModeModalVisible}
@@ -503,6 +445,55 @@ const SettingsScreen: React.FC = () => {
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonConfirm]}
                 onPress={saveModeConfiguration}
+                disabled={isLoading}
+              >
+                <Text style={styles.modalButtonConfirmText}>
+                  {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={isPriorityLoadModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsPriorityLoadModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Réserve de puissance prioritaire</Text>
+            
+            <Text style={styles.modalLabel}>Puissance en Watts :</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={newPriorityLoadReserve.toString()}
+              onChangeText={(text) => {
+                const value = parseInt(text) || 0;
+                setNewPriorityLoadReserve(Math.max(0, value));
+              }}
+              placeholder="0"
+              keyboardType="numeric"
+            />
+            
+            <Text style={styles.modalNote}>
+              Définit la puissance minimum à réserver pour les charges prioritaires de la maison (éclairage, frigo, etc.) avant d'envoyer le surplus au chargeur.
+            </Text>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setIsPriorityLoadModalVisible(false)}
+                disabled={isLoading}
+              >
+                <Text style={styles.modalButtonCancelText}>Annuler</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={savePriorityLoadConfiguration}
                 disabled={isLoading}
               >
                 <Text style={styles.modalButtonConfirmText}>
@@ -654,14 +645,14 @@ const styles = StyleSheet.create({
   modalButtonConfirm: {
     backgroundColor: '#007AFF',
   },
-  modalButtonDefault: {
+  modalButtonTest: {
     backgroundColor: '#FF9500',
   },
   modalButtonCancelText: {
     fontSize: 16,
     color: '#8E8E93',
   },
-  modalButtonDefaultText: {
+  modalButtonTestText: {
     fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '600',
@@ -670,6 +661,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#FFFFFF',
     fontWeight: '600',
+  },
+  connectionStatus: {
+    backgroundColor: '#F8F9FA',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 12,
+    alignItems: 'center',
+  },
+  connectionStatusText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#8E8E93',
   },
   modeOption: {
     flexDirection: 'row',
