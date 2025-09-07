@@ -12,11 +12,12 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, ActivityIndicator, TouchableOpacity } from "react-native";
 
 // Import types and services
 import { SolisDataDTO, ZaptecDataDTO } from "../types";
 import { apiService } from "../services";
+
 
 // Removed chart components - now available in dedicated Charts screen
 
@@ -38,7 +39,9 @@ const HomeScreen: React.FC = () => {
   const [zaptecStatus, setZaptecStatus] = useState<ZaptecDataDTO | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Loading indicator
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false); // Refresh indicator
+  const [isRealTimeRefreshing, setIsRealTimeRefreshing] = useState<boolean>(false); // Real-time refresh indicator
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [isRealTimeData, setIsRealTimeData] = useState<boolean>(false); // Flag to indicate if data is real-time
 
   // ========================================
   // UTILITY FUNCTIONS
@@ -54,10 +57,21 @@ const HomeScreen: React.FC = () => {
       // Faster than waiting for each request one after the other
       const [solis, zaptec] = await Promise.all([apiService.getSolisData(), apiService.getZaptecStatus()]);
 
-      // Update state with retrieved data
-      setSolisData(solis);
-      setZaptecStatus(zaptec);
-      setLastUpdate(new Date());
+      // Only update if this data is more recent than current data
+      const newSolisTimestamp = new Date(solis.timestamp);
+      const currentSolisTimestamp = solisData ? new Date(solisData.timestamp) : new Date(0);
+      
+      if (newSolisTimestamp >= currentSolisTimestamp) {
+        setSolisData(solis);
+        setZaptecStatus(zaptec);
+        setLastUpdate(new Date());
+        setIsRealTimeData(false); // Data from database
+      } else {
+        console.log("Skipping update - current data is more recent", {
+          current: currentSolisTimestamp,
+          new: newSolisTimestamp
+        });
+      }
     } catch (error) {
       // Error handling with native alert display
       console.error("Error loading data:", error);
@@ -70,12 +84,67 @@ const HomeScreen: React.FC = () => {
   };
 
   /**
-   * Handle manual data refresh
+   * Handle manual data refresh (database data)
    * Called when user pulls down (pull-to-refresh)
    */
   const handleRefresh = (): void => {
     setIsRefreshing(true);
     loadData();
+  };
+
+  /**
+   * Load real-time data directly from Solis inverter via COM port
+   * This bypasses the database and gets fresh data from the device
+   */
+  const loadRealTimeData = async (): Promise<void> => {
+    try {
+      setIsRealTimeRefreshing(true);
+      
+      // Get real-time data from inverter and Zaptec status
+      const [solis, zaptec] = await Promise.all([
+        apiService.getSolisRealTimeData(), 
+        apiService.getZaptecStatus()
+      ]);
+
+      // Real-time data should always be more recent, but let's verify
+      const newSolisTimestamp = new Date(solis.timestamp);
+      const currentSolisTimestamp = solisData ? new Date(solisData.timestamp) : new Date(0);
+      
+      if (newSolisTimestamp >= currentSolisTimestamp) {
+        // Update state with real-time data
+        setSolisData(solis);
+        setZaptecStatus(zaptec);
+        setLastUpdate(new Date());
+        setIsRealTimeData(true); // Flag as real-time data
+      } else {
+        console.warn("Real-time data appears older than current data", {
+          current: currentSolisTimestamp,
+          realtime: newSolisTimestamp
+        });
+        // Still update in case there's a clock sync issue, but warn user
+        setSolisData(solis);
+        setZaptecStatus(zaptec);
+        setLastUpdate(new Date());
+        setIsRealTimeData(true);
+      }
+    } catch (error) {
+      // Error handling with native alert display
+      console.error("Error loading real-time data:", error);
+      Alert.alert(
+        "Real-time Data Error", 
+        "Unable to retrieve real-time data from inverter. The device may be busy or temporarily unavailable.", 
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsRealTimeRefreshing(false);
+    }
+  };
+
+  /**
+   * Handle manual real-time refresh button
+   */
+  const handleRealTimeRefresh = (): void => {
+    loadRealTimeData();
   };
 
   /**
@@ -112,14 +181,28 @@ const HomeScreen: React.FC = () => {
   };
 
   /**
-   * Get battery status text
+   * Get battery status text with power
    */
   const getBatteryStatusText = (): string => {
     const batteryPower = solisData?.battery.power || 0;
-    if (batteryPower < 0) return "Charging";
-    if (batteryPower > 0) return "Discharging";
+    const absolutePower = Math.abs(batteryPower);
+    
+    if (batteryPower < 0) return `Charging at ${formatPower(absolutePower)}`;
+    if (batteryPower > 0) return `Discharging at ${formatPower(absolutePower)}`;
     return "Idle";
   };
+
+  /**
+   * Get battery status color
+   * Green for charging, red for discharging, gray for idle
+   */
+  const getBatteryStatusColor = (): string => {
+    const batteryPower = solisData?.battery.power || 0;
+    if (batteryPower < 0) return "#34C759"; // Green for charging
+    if (batteryPower > 0) return "#FF3B30"; // Red for discharging
+    return "#8E8E93"; // Gray for idle
+  };
+
 
   /**
    * Return a color based on a numeric value
@@ -191,19 +274,39 @@ const HomeScreen: React.FC = () => {
       {/* Header with title and last update */}
       <View style={styles.header}>
         <Text style={styles.title}>Zaptec-Solis System</Text>
-        {lastUpdate && (
-          <Text style={styles.lastUpdate}>
-            Dernière mise à jour:{" "}
-            {lastUpdate.toLocaleString("fr-BE", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit"
-            })}
-          </Text>
-        )}
+        
+        {/* Data status and refresh button */}
+        <View style={styles.headerActions}>
+          <View style={styles.statusContainer}>
+            {lastUpdate && (
+              <View style={styles.updateInfo}>
+                <Text style={[styles.dataSource, { color: isRealTimeData ? "#34C759" : "#007AFF" }]}>
+                  {isRealTimeData ? "🔴 Temps réel" : "💾 Base de données"}
+                </Text>
+                <Text style={styles.lastUpdate}>
+                  {lastUpdate.toLocaleString("fr-BE", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit"
+                  })}
+                </Text>
+              </View>
+            )}
+          </View>
+          
+          <TouchableOpacity 
+            style={[styles.realTimeButton, isRealTimeRefreshing && styles.realTimeButtonLoading]}
+            onPress={handleRealTimeRefresh}
+            disabled={isRealTimeRefreshing}
+          >
+            <Text style={styles.realTimeButtonText}>
+              {isRealTimeRefreshing ? "🔄" : "⚡"} {isRealTimeRefreshing ? "Lecture..." : "Temps réel"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Solar Production Section */}
@@ -233,13 +336,10 @@ const HomeScreen: React.FC = () => {
         </View>
         <View style={styles.dataRow}>
           <Text style={styles.dataLabel}>Status:</Text>
-          <Text style={[styles.dataValue, { color: getColorForValue(solisData?.battery.power || 0) }]}>{getBatteryStatusText()}</Text>
-        </View>
-        <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Battery power:</Text>
-          <Text style={[styles.dataValue, { color: getColorForValue(solisData?.battery.power || 0) }]}>{formatPower(solisData?.battery.power || 0)}</Text>
+          <Text style={[styles.dataValue, { color: getBatteryStatusColor() }]}>{getBatteryStatusText()}</Text>
         </View>
       </View>
+
 
       {/* Charger Section */}
       <View style={styles.section}>
@@ -315,13 +415,49 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#000000",
-    textAlign: "center"
+    textAlign: "center",
+    marginBottom: 12
+  },
+  headerActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  statusContainer: {
+    flex: 1,
+    alignItems: "flex-start"
+  },
+  updateInfo: {
+    alignItems: "flex-start"
+  },
+  dataSource: {
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 2
   },
   lastUpdate: {
-    fontSize: 12,
-    color: "#8E8E93",
-    textAlign: "center",
-    marginTop: 4
+    fontSize: 11,
+    color: "#8E8E93"
+  },
+  realTimeButton: {
+    backgroundColor: "#FF9500",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2
+  },
+  realTimeButtonLoading: {
+    backgroundColor: "#8E8E93"
+  },
+  realTimeButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    textAlign: "center"
   },
   section: {
     backgroundColor: "#FFFFFF",
@@ -399,7 +535,7 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     textAlign: "center",
     lineHeight: 20
-  }
+  },
 });
 
 export default HomeScreen;

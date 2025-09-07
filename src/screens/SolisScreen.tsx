@@ -85,14 +85,6 @@ const SolisScreen: React.FC = () => {
     return `${value.toFixed(decimals)} ${unit}`;
   };
 
-  /**
-   * Calcule l'efficacité de l'onduleur
-   * Efficacité = (Puissance AC / Puissance DC) * 100
-   */
-  const calculateEfficiency = (): number => {
-    if (!solisData || solisData.pv.totalPowerDC === 0) return 0;
-    return (solisData.ac.totalPowerAC / solisData.pv.totalPowerDC) * 100;
-  };
 
   /**
    * Retourne une couleur basée sur le niveau de batterie
@@ -104,12 +96,34 @@ const SolisScreen: React.FC = () => {
   };
 
   /**
-   * Retourne le statut textuel de la batterie
+   * Formate une valeur de puissance avec l'unité appropriée
+   */
+  const formatPower = (watts: number): string => {
+    if (Math.abs(watts) >= 1000) {
+      return `${(watts / 1000).toFixed(1)} kW`;
+    }
+    return `${watts.toFixed(0)} W`;
+  };
+
+  /**
+   * Retourne le statut textuel de la batterie avec puissance
    */
   const getBatteryStatus = (power: number): string => {
-    if (power > 50) return 'En charge';
-    if (power < -50) return 'En décharge';
-    return 'Standby';
+    const absolutePower = Math.abs(power);
+    
+    if (power < 0) return `Charging at ${formatPower(absolutePower)}`;
+    if (power > 0) return `Discharging at ${formatPower(absolutePower)}`;
+    return 'Idle';
+  };
+
+  /**
+   * Retourne la couleur du statut de batterie
+   * Vert pour charge, rouge pour décharge, gris pour idle
+   */
+  const getBatteryStatusColor = (power: number): string => {
+    if (power < 0) return '#34C759'; // Vert pour charge
+    if (power > 0) return '#FF3B30'; // Rouge pour décharge
+    return '#8E8E93'; // Gris pour idle
   };
 
   // ========================================
@@ -157,19 +171,66 @@ const SolisScreen: React.FC = () => {
   };
 
   /**
-   * Composant d'indicateur circulaire simple
+   * Composant de gauge (jauge) pour afficher la production solaire
    */
-  const CircularIndicator: React.FC<{ value: number; max: number; label: string; color: string }> = 
-    ({ value, max, label, color }) => {
-      const percentage = Math.min((value / max) * 100, 100);
+  const GaugeChart: React.FC<{ value: number; max: number; label: string; unit: string }> = 
+    ({ value, max, label, unit }) => {
+      // Pourcentage basé sur la limite de l'onduleur (5000W = 100%)
+      const percentage = (value / 5000) * 100;
+      const displayPercentage = percentage;
+      
+      // Angle pour l'affichage visuel (limité à 180° même si >100%)
+      const angle = Math.min((percentage / 100) * 180, 180);
+      
+      // Couleur basée sur la puissance absolue (pas le pourcentage)
+      // Bordeaux < 1000W, Rouge 1000-2000W, Orange 2000-3000W, Jaune 3000-4000W, Vert 4000-5000W, Vert très foncé >5000W
+      const getGaugeColor = (watts: number): string => {
+        if (watts < 1000) return '#800020'; // Bordeaux (très faible production)
+        if (watts < 2000) return '#FF3B30'; // Rouge (faible production)
+        if (watts < 3000) return '#FF9500'; // Orange (production modérée)
+        if (watts < 4000) return '#FFD700'; // Jaune (bonne production)
+        if (watts <= 5000) return '#34C759'; // Vert (production optimale - limite onduleur)
+        return '#006400'; // Vert très foncé (au-delà de la limite onduleur)
+      };
+      
+      const color = getGaugeColor(value);
+      
+      // Format de la valeur (W ou kW)
+      const formatValue = (watts: number): string => {
+        if (watts >= 1000) {
+          return `${(watts / 1000).toFixed(1)} kW`;
+        }
+        return `${watts.toFixed(0)} W`;
+      };
       
       return (
-        <View style={styles.circularIndicator}>
-          <View style={styles.circularIndicatorBorder}>
-            <View style={[styles.circularIndicatorFill, { backgroundColor: color, opacity: percentage / 100 }]} />
+        <View style={styles.gaugeContainer}>
+          <View style={styles.gaugeBorder}>
+            <View style={[styles.gaugeBackground]}>
+              {/* Arc de fond (gris) */}
+              <View style={[styles.gaugeArc, { backgroundColor: '#E5E5EA' }]} />
+              
+              {/* Arc de progression */}
+              <View 
+                style={[
+                  styles.gaugeArc, 
+                  { 
+                    backgroundColor: color,
+                    transform: [{ rotate: `${angle - 180}deg` }],
+                    opacity: displayPercentage > 0 ? 1 : 0
+                  }
+                ]} 
+              />
+            </View>
+            
+            {/* Valeurs centrales */}
+            <View style={styles.gaugeContent}>
+              <Text style={styles.gaugeValue}>{formatValue(value)}</Text>
+              <Text style={styles.gaugePercentage}>{displayPercentage.toFixed(0)}%</Text>
+              <Text style={styles.gaugeLabel}>{label}</Text>
+              <Text style={styles.gaugeMax}>Max: {formatValue(max)}</Text>
+            </View>
           </View>
-          <Text style={styles.circularIndicatorValue}>{value.toFixed(0)}</Text>
-          <Text style={styles.circularIndicatorLabel}>{label}</Text>
         </View>
       );
     };
@@ -231,17 +292,11 @@ const SolisScreen: React.FC = () => {
         
         {/* Vue d'ensemble */}
         <View style={styles.overviewRow}>
-          <CircularIndicator 
+          <GaugeChart 
             value={solisData.pv.totalPowerDC} 
-            max={5000} 
-            label="Puissance totale (W)" 
-            color="#FF9500" 
-          />
-          <CircularIndicator 
-            value={calculateEfficiency()} 
-            max={100} 
-            label="Efficacité (%)" 
-            color="#34C759" 
+            max={9000}
+            label="Production solaire"
+            unit="W"
           />
         </View>
 
@@ -293,20 +348,9 @@ const SolisScreen: React.FC = () => {
         
         <View style={styles.batteryDetails}>
           <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>État :</Text>
-            <Text style={[styles.dataValue, { color: getBatteryColor(solisData.battery.soc) }]}>
+            <Text style={styles.dataLabel}>Status:</Text>
+            <Text style={[styles.dataValue, { color: getBatteryStatusColor(solisData.battery.power) }]}>
               {getBatteryStatus(solisData.battery.power)}
-            </Text>
-          </View>
-          <View style={styles.dataRow}>
-            <Text style={styles.dataLabel}>Puissance :</Text>
-            <Text style={[styles.dataValue, { 
-              color: solisData.battery.power > 0 ? '#34C759' : 
-                     solisData.battery.power < 0 ? '#FF3B30' : '#8E8E93' 
-            }]}>
-              {formatValue(Math.abs(solisData.battery.power), 'W', 0)}
-              {solisData.battery.power > 0 && ' ⬆️'}
-              {solisData.battery.power < 0 && ' ⬇️'}
             </Text>
           </View>
           <View style={styles.dataRow}>
@@ -340,12 +384,6 @@ const SolisScreen: React.FC = () => {
                    solisData.ac.temperature > 40 ? '#FF9500' : '#34C759' 
           }]}>
             {formatValue(solisData.ac.temperature, '°C')}
-          </Text>
-        </View>
-        <View style={styles.dataRow}>
-          <Text style={styles.dataLabel}>Efficacité :</Text>
-          <Text style={[styles.dataValue, { color: '#34C759' }]}>
-            {formatValue(calculateEfficiency(), '%')}
           </Text>
         </View>
       </View>
@@ -469,38 +507,66 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   overviewRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 20,
   },
-  circularIndicator: {
+  gaugeContainer: {
     alignItems: 'center',
+    width: '100%',
   },
-  circularIndicatorBorder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 4,
-    borderColor: '#E5E5EA',
+  gaugeBorder: {
+    width: 200,
+    height: 120,
+    position: 'relative',
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  gaugeBackground: {
+    position: 'absolute',
+    width: 180,
+    height: 90,
+    borderTopLeftRadius: 90,
+    borderTopRightRadius: 90,
+    overflow: 'hidden',
+    top: 10,
+  },
+  gaugeArc: {
+    position: 'absolute',
+    width: 180,
+    height: 90,
+    borderTopLeftRadius: 90,
+    borderTopRightRadius: 90,
+    transformOrigin: '50% 100%',
+  },
+  gaugeContent: {
+    position: 'absolute',
     alignItems: 'center',
-    marginBottom: 8,
+    top: 20,
+    zIndex: 10,
   },
-  circularIndicatorFill: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-  },
-  circularIndicatorValue: {
-    fontSize: 18,
+  gaugeValue: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#000000',
+    marginBottom: 2,
   },
-  circularIndicatorLabel: {
+  gaugePercentage: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginBottom: 4,
+  },
+  gaugeLabel: {
+    fontSize: 14,
+    color: '#3C3C43',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  gaugeMax: {
     fontSize: 12,
     color: '#8E8E93',
     textAlign: 'center',
-    marginTop: 4,
   },
   pvStringContainer: {
     flexDirection: 'row',

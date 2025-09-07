@@ -2,17 +2,11 @@
  * Hook personnalisé pour gérer les données de graphiques
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import apiService from '../services/apiService';
-import { 
-  DashboardChartData, 
-  SolarProductionChartData,
-  GridExchangeChartData,
-  HouseConsumptionChartData,
-  ZaptecConsumptionChartData
-} from '../types/chart.types';
+import { useState, useEffect, useCallback } from "react";
+import apiService from "../services/apiService";
+import { DashboardChartData, SolarProductionChartData, GridExchangeChartData, HouseConsumptionChartData, ZaptecConsumptionChartData, BatteryChartData, ChartDataPoint } from "../types/chart.types";
 
-export type ChartType = 'dashboard' | 'solar' | 'grid' | 'house' | 'zaptec';
+export type ChartType = "dashboard" | "solar" | "grid" | "house" | "zaptec" | "battery";
 
 interface UseChartDataReturn<T> {
   data: T | null;
@@ -21,11 +15,7 @@ interface UseChartDataReturn<T> {
   refreshData: () => void;
 }
 
-export const useChartData = <T>(
-  chartType: ChartType,
-  period: 'day' | 'week' | 'month' | 'year' = 'day',
-  date?: string
-): UseChartDataReturn<T> => {
+export const useChartData = <T>(chartType: ChartType, period: "day" | "week" | "month" | "year" = "day", date?: string): UseChartDataReturn<T> => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,22 +26,25 @@ export const useChartData = <T>(
 
     try {
       let result;
-      
+
       switch (chartType) {
-        case 'dashboard':
+        case "dashboard":
           result = await apiService.getDashboardChart(period, date);
           break;
-        case 'solar':
+        case "solar":
           result = await apiService.getSolarProductionChart(period, date);
           break;
-        case 'grid':
+        case "grid":
           result = await apiService.getGridExchangeChart(period, date);
           break;
-        case 'house':
+        case "house":
           result = await apiService.getHouseConsumptionChart(period, date);
           break;
-        case 'zaptec':
+        case "zaptec":
           result = await apiService.getZaptecConsumptionChart(period, date);
+          break;
+        case "battery":
+          result = await apiService.getBatteryChart(period, date);
           break;
         default:
           throw new Error(`Type de graphique non supporté: ${chartType}`);
@@ -59,42 +52,53 @@ export const useChartData = <T>(
 
       // Convertir les timestamps en objets Date
       if (result) {
-        if ('data' in result) {
-          result.data = result.data.map((point: any) => ({
+        if ("data" in result) {
+          result.data = result.data.map((point) => ({
             ...point,
             timestamp: new Date(point.timestamp)
           }));
         }
-        
-        if ('solarProduction' in result) {
-          result.solarProduction = result.solarProduction.map((point: any) => ({
+
+        if ("solarProduction" in result) {
+          result.solarProduction = result.solarProduction.map((point) => ({
             ...point,
             timestamp: new Date(point.timestamp)
           }));
-          result.houseConsumption = result.houseConsumption.map((point: any) => ({
+          result.houseConsumption = result.houseConsumption.map((point) => ({
             ...point,
             timestamp: new Date(point.timestamp)
           }));
-          result.zaptecConsumption = result.zaptecConsumption.map((point: any) => ({
+          result.zaptecConsumption = result.zaptecConsumption.map((point) => ({
             ...point,
             timestamp: new Date(point.timestamp)
           }));
-          result.gridImported = result.gridImported.map((point: any) => ({
+          result.gridImported = result.gridImported.map((point) => ({
             ...point,
             timestamp: new Date(point.timestamp)
           }));
-          result.gridExported = result.gridExported.map((point: any) => ({
+          result.gridExported = result.gridExported.map((point) => ({
             ...point,
             timestamp: new Date(point.timestamp)
           }));
         }
-        
-        if ('imported' in result) {
-          result.imported = result.imported.map((point: any) => ({
+
+        if ("imported" in result) {
+          result.imported = result.imported.map((point) => ({
             ...point,
             timestamp: new Date(point.timestamp)
           }));
-          result.exported = result.exported.map((point: any) => ({
+          result.exported = result.exported.map((point) => ({
+            ...point,
+            timestamp: new Date(point.timestamp)
+          }));
+        }
+
+        if ("powerData" in result && "data" in result) {
+          result.data = result.data.map((point) => ({
+            ...point,
+            timestamp: new Date(point.timestamp)
+          }));
+          result.powerData = (result.powerData as ChartDataPoint[]).map((point) => ({
             ...point,
             timestamp: new Date(point.timestamp)
           }));
@@ -106,8 +110,8 @@ export const useChartData = <T>(
 
       setData(result);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des données de graphique:', err);
-      setError(err.message || 'Erreur de chargement des données');
+      console.error("Erreur lors du chargement des données de graphique:", err);
+      setError(err.message || "Erreur de chargement des données");
     } finally {
       setLoading(false);
     }
@@ -130,37 +134,26 @@ export const useChartData = <T>(
 };
 
 // Hooks typés spécialisés
-export const useDashboardChartData = (
-  period: 'day' | 'week' | 'month' | 'year' = 'day',
-  date?: string
-): UseChartDataReturn<DashboardChartData> => {
-  return useChartData<DashboardChartData>('dashboard', period, date);
+export const useDashboardChartData = (period: "day" | "week" | "month" | "year" = "day", date?: string): UseChartDataReturn<DashboardChartData> => {
+  return useChartData<DashboardChartData>("dashboard", period, date);
 };
 
-export const useSolarProductionChartData = (
-  period: 'day' | 'week' | 'month' | 'year' = 'day',
-  date?: string
-): UseChartDataReturn<SolarProductionChartData> => {
-  return useChartData<SolarProductionChartData>('solar', period, date);
+export const useSolarProductionChartData = (period: "day" | "week" | "month" | "year" = "day", date?: string): UseChartDataReturn<SolarProductionChartData> => {
+  return useChartData<SolarProductionChartData>("solar", period, date);
 };
 
-export const useGridExchangeChartData = (
-  period: 'day' | 'week' | 'month' | 'year' = 'day',
-  date?: string
-): UseChartDataReturn<GridExchangeChartData> => {
-  return useChartData<GridExchangeChartData>('grid', period, date);
+export const useGridExchangeChartData = (period: "day" | "week" | "month" | "year" = "day", date?: string): UseChartDataReturn<GridExchangeChartData> => {
+  return useChartData<GridExchangeChartData>("grid", period, date);
 };
 
-export const useHouseConsumptionChartData = (
-  period: 'day' | 'week' | 'month' | 'year' = 'day',
-  date?: string
-): UseChartDataReturn<HouseConsumptionChartData> => {
-  return useChartData<HouseConsumptionChartData>('house', period, date);
+export const useHouseConsumptionChartData = (period: "day" | "week" | "month" | "year" = "day", date?: string): UseChartDataReturn<HouseConsumptionChartData> => {
+  return useChartData<HouseConsumptionChartData>("house", period, date);
 };
 
-export const useZaptecConsumptionChartData = (
-  period: 'day' | 'week' | 'month' | 'year' = 'day',
-  date?: string
-): UseChartDataReturn<ZaptecConsumptionChartData> => {
-  return useChartData<ZaptecConsumptionChartData>('zaptec', period, date);
+export const useZaptecConsumptionChartData = (period: "day" | "week" | "month" | "year" = "day", date?: string): UseChartDataReturn<ZaptecConsumptionChartData> => {
+  return useChartData<ZaptecConsumptionChartData>("zaptec", period, date);
+};
+
+export const useBatteryChartData = (period: "day" | "week" | "month" | "year" = "day", date?: string): UseChartDataReturn<BatteryChartData> => {
+  return useChartData<BatteryChartData>("battery", period, date);
 };

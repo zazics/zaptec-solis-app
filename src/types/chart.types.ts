@@ -42,6 +42,14 @@ export interface ZaptecConsumptionChartData {
   data: ChartDataPoint[];
 }
 
+export interface BatteryChartData {
+  period: 'quarterly' | 'hourly' | 'daily' | 'monthly' | 'yearly';
+  startDate: Date;
+  endDate: Date;
+  data: ChartDataPoint[]; // SOC values in %
+  powerData: ChartDataPoint[]; // Power values in W (positive = discharging, negative = charging)
+}
+
 export interface DashboardChartData {
   period: 'quarterly' | 'hourly' | 'daily' | 'monthly' | 'yearly';
   startDate: Date;

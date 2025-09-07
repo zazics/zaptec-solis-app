@@ -24,12 +24,16 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
   height = 250,
   totalSolarEnergyKwh
 }) => {
+  // Ne rien afficher s'il n'y a pas de données
+  if (data.solarProduction.length === 0) {
+    return null;
+  }
+
   // État pour gérer le point sélectionné via slider
-  const [selectedIndex, setSelectedIndex] = useState<number>(data.solarProduction.length > 0 ? data.solarProduction.length - 1 : 0);
+  const [selectedIndex, setSelectedIndex] = useState<number>(data.solarProduction.length - 1);
 
   // Calculer les paramètres d'échantillonnage
   const calculateSamplingParams = () => {
-    if (data.solarProduction.length === 0) return { maxPoints: 12, labelStep: 1, step: 1 };
 
     let maxPoints = 12;
     let labelStep = 1;
@@ -51,18 +55,6 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
 
   // Préparer les données pour le graphique combiné
   const prepareChartData = () => {
-    if (data.solarProduction.length === 0) {
-      return {
-        labels: ['Pas de données'],
-        datasets: [
-          {
-            data: [0],
-            color: (opacity = 1) => `rgba(255, 99, 132, ${opacity})`,
-            strokeWidth: 2
-          }
-        ]
-      };
-    }
     
     const labels = data.solarProduction
       .filter((_, index) => index % step === 0)

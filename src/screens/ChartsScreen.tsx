@@ -16,7 +16,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, 
 import DashboardChart from "../components/charts/DashboardChart";
 import ChartComponent from "../components/charts/ChartComponent";
 import PeriodSelector from "../components/charts/PeriodSelector";
-import { useDashboardChartData, useSolarProductionChartData, useGridExchangeChartData, useHouseConsumptionChartData, useZaptecConsumptionChartData } from "../hooks/useChartData";
+import { useDashboardChartData, useSolarProductionChartData, useGridExchangeChartData, useHouseConsumptionChartData, useZaptecConsumptionChartData, useBatteryChartData } from "../hooks/useChartData";
 
 /**
  * ChartsScreen Component
@@ -33,7 +33,7 @@ const ChartsScreen: React.FC = () => {
     // Initialize with today's date in YYYY-MM-DD format
     return new Date().toISOString().split("T")[0];
   });
-  const [activeTab, setActiveTab] = useState<"dashboard" | "solar" | "house" | "grid" | "zaptec">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "solar" | "house" | "grid" | "zaptec" | "battery">("dashboard");
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // Chart data hooks - pass date for all periods now
@@ -42,6 +42,7 @@ const ChartsScreen: React.FC = () => {
   const { data: houseData, loading: houseLoading, error: houseError, refreshData: refreshHouse } = useHouseConsumptionChartData(selectedPeriod, selectedDate);
   const { data: gridData, loading: gridLoading, error: gridError, refreshData: refreshGrid } = useGridExchangeChartData(selectedPeriod, selectedDate);
   const { data: zaptecData, loading: zaptecLoading, error: zaptecError, refreshData: refreshZaptec } = useZaptecConsumptionChartData(selectedPeriod, selectedDate);
+  const { data: batteryData, loading: batteryLoading, error: batteryError, refreshData: refreshBattery } = useBatteryChartData(selectedPeriod, selectedDate);
 
   // ========================================
   // FUNCTIONS
@@ -70,7 +71,7 @@ const ChartsScreen: React.FC = () => {
     setIsRefreshing(true);
 
     // Refresh all data
-    Promise.all([refreshDashboard(), refreshSolar(), refreshHouse(), refreshGrid(), refreshZaptec()]).finally(() => {
+    Promise.all([refreshDashboard(), refreshSolar(), refreshHouse(), refreshGrid(), refreshZaptec(), refreshBattery()]).finally(() => {
       setIsRefreshing(false);
     });
   };
@@ -78,7 +79,7 @@ const ChartsScreen: React.FC = () => {
   /**
    * Handle tab change
    */
-  const handleTabChange = (tab: "dashboard" | "solar" | "house" | "grid" | "zaptec"): void => {
+  const handleTabChange = (tab: "dashboard" | "solar" | "house" | "grid" | "zaptec" | "battery"): void => {
     setActiveTab(tab);
   };
 
@@ -90,7 +91,8 @@ const ChartsScreen: React.FC = () => {
     { key: "solar", label: "Solar", icon: "☀️" },
     { key: "house", label: "Home", icon: "🏠" },
     { key: "grid", label: "Grid", icon: "🔌" },
-    { key: "zaptec", label: "Zaptec", icon: "🚗" }
+    { key: "zaptec", label: "Zaptec", icon: "🚗" },
+    { key: "battery", label: "Battery", icon: "🔋" }
   ];
 
   /**
@@ -173,6 +175,19 @@ const ChartsScreen: React.FC = () => {
         if (zaptecLoading) return renderLoading("consommation Zaptec");
         if (zaptecData) {
           return <ChartComponent title="Consommation Zaptec" data={zaptecData.data} color="rgba(40, 167, 69, 1)" unit="W" showValues={true} height={280} period={zaptecData.period} />;
+        }
+        return null;
+
+      case "battery":
+        if (batteryError) return renderError(batteryError, "batterie");
+        if (batteryLoading) return renderLoading("batterie");
+        if (batteryData) {
+          return (
+            <View>
+              <ChartComponent title="Niveau de charge" data={batteryData.data} color="rgba(52, 199, 89, 1)" unit="%" showValues={true} height={250} period={batteryData.period} />
+              <ChartComponent title="Puissance batterie" data={batteryData.powerData} color="rgba(255, 193, 7, 1)" unit="W" showValues={true} height={250} period={batteryData.period} />
+            </View>
+          );
         }
         return null;
 

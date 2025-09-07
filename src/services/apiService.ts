@@ -15,6 +15,7 @@ import {
   GridExchangeChartData, 
   HouseConsumptionChartData, 
   ZaptecConsumptionChartData, 
+  BatteryChartData,
   DashboardChartData,
   ChartPeriodOption
 } from "../types/chart.types";
@@ -135,6 +136,17 @@ class ApiService {
    */
   async getSolisData(): Promise<SolisDataDTO> {
     const response = await this.get<SolisDataDTO>("/automation/solis/latest");
+    return response;
+  }
+
+  /**
+   * Retrieve real-time Solis inverter data directly from COM port
+   * This bypasses the database and queries the inverter directly
+   *
+   * @returns Real-time solar inverter data fresh from the device
+   */
+  async getSolisRealTimeData(): Promise<SolisDataDTO> {
+    const response = await this.get<SolisDataDTO>("/automation/solis/realtime");
     return response;
   }
 
@@ -275,6 +287,21 @@ class ApiService {
     if (date) params.append('date', date);
     
     return await this.get<ZaptecConsumptionChartData>(`/automation/charts/zaptec-consumption?${params.toString()}`);
+  }
+
+  /**
+   * Get battery charge and power chart data
+   *
+   * @param period Chart period ('day', 'week', 'month', 'year')
+   * @param date Optional specific date (YYYY-MM-DD)
+   * @returns Battery SOC and power chart data
+   */
+  async getBatteryChart(period: 'day' | 'week' | 'month' | 'year' = 'day', date?: string): Promise<BatteryChartData> {
+    const params = new URLSearchParams();
+    params.append('period', period);
+    if (date) params.append('date', date);
+    
+    return await this.get<BatteryChartData>(`/automation/charts/battery?${params.toString()}`);
   }
 
   /**
