@@ -10,15 +10,7 @@
 
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { ApiResponse, ApiError, ApiConfig, ZaptecDataDTO, SolisDataDTO, ChargerControlRequest, AutomationConfig } from "../types";
-import { 
-  SolarProductionChartData, 
-  GridExchangeChartData, 
-  HouseConsumptionChartData, 
-  ZaptecConsumptionChartData, 
-  BatteryChartData,
-  DashboardChartData,
-  ChartPeriodOption
-} from "../types/chart.types";
+import { SolarProductionChartData, GridExchangeChartData, HouseConsumptionChartData, ZaptecConsumptionChartData, BatteryChartData, DashboardChartData, ChartPeriodOption } from "../types/chart.types";
 
 /**
  * ApiService Class
@@ -226,7 +218,7 @@ class ApiService {
    * @returns Available chart period options
    */
   async getChartPeriods(): Promise<ChartPeriodOption[]> {
-    return await this.get<ChartPeriodOption[]>("/automation/charts/periods");
+    return await this.get<ChartPeriodOption[]>("/charts/periods");
   }
 
   /**
@@ -236,12 +228,12 @@ class ApiService {
    * @param date Optional specific date (YYYY-MM-DD)
    * @returns Solar production chart data
    */
-  async getSolarProductionChart(period: 'day' | 'week' | 'month' | 'year' = 'day', date?: string): Promise<SolarProductionChartData> {
+  async getSolarProductionChart(period: "day" | "week" | "month" | "year" = "day", date?: string): Promise<SolarProductionChartData> {
     const params = new URLSearchParams();
-    params.append('period', period);
-    if (date) params.append('date', date);
-    
-    return await this.get<SolarProductionChartData>(`/automation/charts/solar-production?${params.toString()}`);
+    params.append("period", period);
+    if (date) params.append("date", date);
+
+    return await this.get<SolarProductionChartData>(`/charts/solar-production?${params.toString()}`);
   }
 
   /**
@@ -251,12 +243,12 @@ class ApiService {
    * @param date Optional specific date (YYYY-MM-DD)
    * @returns Grid exchange chart data
    */
-  async getGridExchangeChart(period: 'day' | 'week' | 'month' | 'year' = 'day', date?: string): Promise<GridExchangeChartData> {
+  async getGridExchangeChart(period: "day" | "week" | "month" | "year" = "day", date?: string): Promise<GridExchangeChartData> {
     const params = new URLSearchParams();
-    params.append('period', period);
-    if (date) params.append('date', date);
-    
-    return await this.get<GridExchangeChartData>(`/automation/charts/grid-exchange?${params.toString()}`);
+    params.append("period", period);
+    if (date) params.append("date", date);
+
+    return await this.get<GridExchangeChartData>(`/charts/grid-exchange?${params.toString()}`);
   }
 
   /**
@@ -266,12 +258,12 @@ class ApiService {
    * @param date Optional specific date (YYYY-MM-DD)
    * @returns House consumption chart data
    */
-  async getHouseConsumptionChart(period: 'day' | 'week' | 'month' | 'year' = 'day', date?: string): Promise<HouseConsumptionChartData> {
+  async getHouseConsumptionChart(period: "day" | "week" | "month" | "year" = "day", date?: string): Promise<HouseConsumptionChartData> {
     const params = new URLSearchParams();
-    params.append('period', period);
-    if (date) params.append('date', date);
-    
-    return await this.get<HouseConsumptionChartData>(`/automation/charts/house-consumption?${params.toString()}`);
+    params.append("period", period);
+    if (date) params.append("date", date);
+
+    return await this.get<HouseConsumptionChartData>(`/charts/house-consumption?${params.toString()}`);
   }
 
   /**
@@ -281,12 +273,12 @@ class ApiService {
    * @param date Optional specific date (YYYY-MM-DD)
    * @returns Zaptec consumption chart data
    */
-  async getZaptecConsumptionChart(period: 'day' | 'week' | 'month' | 'year' = 'day', date?: string): Promise<ZaptecConsumptionChartData> {
+  async getZaptecConsumptionChart(period: "day" | "week" | "month" | "year" = "day", date?: string): Promise<ZaptecConsumptionChartData> {
     const params = new URLSearchParams();
-    params.append('period', period);
-    if (date) params.append('date', date);
-    
-    return await this.get<ZaptecConsumptionChartData>(`/automation/charts/zaptec-consumption?${params.toString()}`);
+    params.append("period", period);
+    if (date) params.append("date", date);
+
+    return await this.get<ZaptecConsumptionChartData>(`/charts/zaptec-consumption?${params.toString()}`);
   }
 
   /**
@@ -296,12 +288,12 @@ class ApiService {
    * @param date Optional specific date (YYYY-MM-DD)
    * @returns Battery SOC and power chart data
    */
-  async getBatteryChart(period: 'day' | 'week' | 'month' | 'year' = 'day', date?: string): Promise<BatteryChartData> {
+  async getBatteryChart(period: "day" | "week" | "month" | "year" = "day", date?: string): Promise<BatteryChartData> {
     const params = new URLSearchParams();
-    params.append('period', period);
-    if (date) params.append('date', date);
-    
-    return await this.get<BatteryChartData>(`/automation/charts/battery?${params.toString()}`);
+    params.append("period", period);
+    if (date) params.append("date", date);
+
+    return await this.get<BatteryChartData>(`/charts/battery?${params.toString()}`);
   }
 
   /**
@@ -311,12 +303,12 @@ class ApiService {
    * @param date Optional specific date (YYYY-MM-DD)
    * @returns Combined dashboard chart data
    */
-  async getDashboardChart(period: 'day' | 'week' | 'month' | 'year' = 'day', date?: string): Promise<DashboardChartData> {
+  async getDashboardChart(period: "day" | "week" | "month" | "year" = "day", date?: string): Promise<DashboardChartData> {
     const params = new URLSearchParams();
-    params.append('period', period);
-    if (date) params.append('date', date);
-    
-    return await this.get<DashboardChartData>(`/automation/charts/dashboard?${params.toString()}`);
+    params.append("period", period);
+    if (date) params.append("date", date);
+
+    return await this.get<DashboardChartData>(`/charts/dashboard?${params.toString()}`);
   }
 
   // ========================================

@@ -61,10 +61,10 @@ The app communicates with a Node.js backend via REST API endpoints:
 - `/automation/config` - Automation system configuration
 
 **Chart Data Endpoints:**
-- `/automation/charts/solar-production` - Solar production charts
-- `/automation/charts/grid-exchange` - Grid import/export data
-- `/automation/charts/battery` - Battery state of charge and power
-- `/automation/charts/dashboard` - Combined dashboard metrics
+- `/charts/solar-production` - Solar production charts
+- `/charts/grid-exchange` - Grid import/export data
+- `/charts/battery` - Battery state of charge and power
+- `/charts/dashboard` - Combined dashboard metrics
 
 ### Configuration Management
 The app uses a dual configuration approach:
