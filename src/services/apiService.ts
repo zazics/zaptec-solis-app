@@ -171,10 +171,10 @@ class ApiService {
   /**
    * Change automation mode
    *
-   * @param mode Mode to activate ('surplus', 'manual', 'minimum', 'force_minimum')
+   * @param mode Mode to activate ('surplus', 'manual', 'minimum')
    * @returns Change confirmation
    */
-  async setAutomationMode(mode: "surplus" | "manual" | "minimum" | "force_minimum"): Promise<ApiResponse> {
+  async setAutomationMode(mode: "surplus" | "manual" | "minimum"): Promise<ApiResponse> {
     return await this.put("/automation/config", { mode });
   }
 

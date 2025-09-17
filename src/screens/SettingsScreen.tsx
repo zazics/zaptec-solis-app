@@ -23,7 +23,7 @@ const SettingsScreen: React.FC = () => {
   const [newPriorityLoadReserve, setNewPriorityLoadReserve] = useState<number>(0);
   const [currentApiConfig, setCurrentApiConfig] = useState(apiService.getConfig());
   const [automationConfig, setAutomationConfig] = useState<AutomationConfig | null>(null);
-  const [selectedMode, setSelectedMode] = useState<'surplus' | 'manual' | 'minimum' | 'force_minimum'>('surplus');
+  const [selectedMode, setSelectedMode] = useState<'surplus' | 'manual' | 'minimum'>('surplus');
   const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'failed'>('unknown');
 
@@ -177,22 +177,38 @@ const SettingsScreen: React.FC = () => {
     }
   };
 
-  const getModeLabel = (mode: 'surplus' | 'manual' | 'minimum' | 'force_minimum') => {
+  const toggleNeverStopCharging = async (value: boolean) => {
+    try {
+      setIsLoading(true);
+      await apiService.configureAutomation({ neverStopCharging: value });
+      await loadAutomationConfig(); // Recharger la configuration
+      Alert.alert(
+        'Succès',
+        value
+          ? 'La charge ne s\'arrêtera plus automatiquement'
+          : 'La charge pourra être arrêtée selon le mode sélectionné'
+      );
+    } catch (error) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getModeLabel = (mode: 'surplus' | 'manual' | 'minimum') => {
     switch (mode) {
       case 'surplus': return 'Surplus solaire';
       case 'manual': return 'Manuel';
       case 'minimum': return 'Minimum 6A';
-      case 'force_minimum': return 'Force minimum 6A';
       default: return mode;
     }
   };
 
-  const getModeDescription = (mode: 'surplus' | 'manual' | 'minimum' | 'force_minimum') => {
+  const getModeDescription = (mode: 'surplus' | 'manual' | 'minimum') => {
     switch (mode) {
       case 'surplus': return 'Charge uniquement avec le surplus d\'énergie solaire';
       case 'manual': return 'Contrôle manuel du chargeur';
       case 'minimum': return 'Charge à 6A si assez de puissance solaire';
-      case 'force_minimum': return 'Charge toujours à 6A, même sans soleil';
       default: return '';
     }
   };
@@ -224,7 +240,7 @@ const SettingsScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.settingItem}
           onPress={openPriorityLoadModal}
           disabled={isLoading || !automationConfig}
@@ -239,6 +255,26 @@ const SettingsScreen: React.FC = () => {
             <Text style={styles.settingItemArrow}>›</Text>
           </View>
         </TouchableOpacity>
+
+        <View style={styles.settingItem}>
+          <View style={styles.settingItemContent}>
+            <View style={styles.settingItemText}>
+              <Text style={styles.settingItemTitle}>Ne jamais arrêter la charge</Text>
+              <Text style={styles.settingItemSubtitle}>
+                {automationConfig?.neverStopCharging
+                  ? 'La charge ne s\'arrêtera jamais une fois démarrée'
+                  : 'La charge peut être arrêtée selon le mode sélectionné'}
+              </Text>
+            </View>
+            <Switch
+              value={automationConfig?.neverStopCharging || false}
+              onValueChange={toggleNeverStopCharging}
+              disabled={isLoading || !automationConfig}
+              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
+              thumbColor={'#FFFFFF'}
+            />
+          </View>
+        </View>
 
         <TouchableOpacity 
           style={styles.settingItem}
@@ -403,7 +439,7 @@ const SettingsScreen: React.FC = () => {
             
             <Text style={styles.modalLabel}>Sélectionnez un mode :</Text>
             
-            {(['surplus', 'manual', 'minimum', 'force_minimum'] as const).map((mode) => (
+            {(['surplus', 'manual', 'minimum'] as const).map((mode) => (
               <TouchableOpacity
                 key={mode}
                 style={[

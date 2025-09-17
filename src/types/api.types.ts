@@ -125,7 +125,8 @@ export interface ChargerControlRequest {
  */
 export interface AutomationConfig {
   enabled: boolean;
-  mode: "surplus" | "manual" | "minimum" | "force_minimum";
+  mode: "surplus" | "manual" | "minimum";
   maxChargingPower: number;
   priorityLoadReserve: number;
+  neverStopCharging: boolean;
 }
