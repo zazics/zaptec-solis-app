@@ -4,9 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import Slider from '@react-native-community/slider';
 import { DashboardChartData } from '../../types/chart.types';
 
 const screenWidth = Dimensions.get('window').width;
@@ -29,8 +28,10 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
     return null;
   }
 
-  // État pour gérer le point sélectionné via slider
-  const [selectedIndex, setSelectedIndex] = useState<number>(data.solarProduction.length - 1);
+  // État pour gérer le point sélectionné et la ligne verticale
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1); // -1 indique qu'aucun point n'est sélectionné
+  const [verticalLineX, setVerticalLineX] = useState<number>(0);
+  const [showVerticalLine, setShowVerticalLine] = useState<boolean>(false);
 
   // Calculer les paramètres d'échantillonnage
   const calculateSamplingParams = () => {
@@ -63,9 +64,9 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
         const minutes = date.getMinutes();
         
         if (data.period === 'quarterly') {
-          // Pour les quarts d'heure, afficher les labels stratégiquement
-          if (index % labelStep === 0) {
-            return minutes === 0 ? `${date.getHours()}h` : `${date.getHours()}h${minutes.toString().padStart(2, '0')}`;
+          // Pour les quarts d'heure, afficher seulement les heures pleines
+          if (index % labelStep === 0 && minutes === 0) {
+            return `${date.getHours()}h`;
           }
           return '';
         } else if (data.period === 'hourly') {
@@ -138,15 +139,8 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
 
   const chartData = prepareChartData();
   
-  // Calculer la largeur du graphique basée sur le nombre de points
-  const calculateChartWidth = () => {
-    const minWidth = screenWidth - 32; // Largeur minimum
-    const pointWidth = data.period === 'quarterly' ? 15 : data.period === 'hourly' ? 25 : 40; // Largeur par point
-    const calculatedWidth = chartData.labels.length * pointWidth;
-    return Math.max(minWidth, calculatedWidth);
-  };
-  
-  const chartWidth = calculateChartWidth();
+  // Utiliser la largeur totale de l'écran sans marges
+  const chartWidth = screenWidth; // Largeur complète de l'écran
   
   const chartConfig = {
     backgroundColor: '#ffffff',
@@ -158,7 +152,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
       borderRadius: 16,
     },
     propsForDots: {
-      r: data.period === 'quarterly' ? '2' : '3', // Smaller dots for dense data
+      r: data.period === 'quarterly' ? '1' : '1.5', // Much smaller dots
       strokeWidth: '1',
     },
     decimalPlaces: 0,
@@ -169,14 +163,14 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
     },
   };
 
-  // Obtenir le point sélectionné
+  // Obtenir le point sélectionné (seulement si un index valide est sélectionné)
   const getSelectedPoint = () => {
     if (selectedIndex >= 0 && selectedIndex < data.solarProduction.length) {
       const solarPoint = data.solarProduction[selectedIndex];
       const housePoint = data.houseConsumption[selectedIndex];
       const zaptecPoint = data.zaptecConsumption[selectedIndex];
       const gridImportPoint = data.gridImported[selectedIndex];
-      
+
       return {
         solar: Math.round(solarPoint?.value || 0),
         house: Math.round(housePoint?.value || 0),
@@ -191,11 +185,21 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
 
   const selectedPoint = getSelectedPoint();
 
-  // Gestion du clic sur un point pour positionner le slider
-  const handleDataPointClick = (dataPoint: any) => {
+
+  // Gestion du clic sur un point pour afficher les détails
+  const handleDataPointClick = (dataPoint: { index: number; value: number; x: number; y: number }) => {
     const originalDataIndex = dataPoint.index * step;
+    const clickX = dataPoint.x;
+
+    console.log(`Point cliqué: index=${dataPoint.index}, originalIndex=${originalDataIndex}, clickX=${clickX}`);
+
     if (originalDataIndex < data.solarProduction.length) {
       setSelectedIndex(originalDataIndex);
+      setVerticalLineX(clickX);
+      setShowVerticalLine(true);
+
+      // Masquer la ligne après 3 secondes
+      setTimeout(() => setShowVerticalLine(false), 3000);
     }
   };
 
@@ -215,23 +219,6 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      
-      {/* Navigation par slider si on a des données */}
-      {data.solarProduction.length > 1 && (
-        <View style={styles.sliderContainer}>
-          <Text style={styles.sliderHint}>📍 Naviguez avec le curseur ou tapez sur un point du graphique</Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={0}
-            maximumValue={Math.max(0, data.solarProduction.length - 1)}
-            step={1}
-            value={selectedIndex}
-            onValueChange={(value) => setSelectedIndex(Math.round(value))}
-            minimumTrackTintColor="#007AFF"
-            maximumTrackTintColor="#E0E0E0"
-          />
-        </View>
-      )}
       
       {/* Légende */}
       <View style={styles.legend}>
@@ -253,31 +240,39 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
         </View>
       </View>
 
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={true}
-        style={styles.chartScrollView}
-        contentContainerStyle={styles.chartScrollContent}
-      >
-        <LineChart
-          data={chartData}
-          width={chartWidth}
-          height={height}
-          chartConfig={chartConfig}
-          bezier={true}
-          style={styles.chart}
-          withVerticalLines={false}
-          withHorizontalLines={true}
-          withInnerLines={false}
-          withOuterLines={false}
-          withVerticalLabels={true}
-          withHorizontalLabels={true}
-          fromZero={true}
-          withShadow={false}
-          withDots={true}
-          onDataPointClick={handleDataPointClick}
-        />
-      </ScrollView>
+      <View style={styles.chartContainer}>
+        <View style={styles.chartWrapper}>
+          <LineChart
+            data={chartData}
+            width={chartWidth}
+            height={height}
+            chartConfig={chartConfig}
+            bezier={true}
+            style={styles.chart}
+            withVerticalLines={false}
+            withHorizontalLines={true}
+            withInnerLines={false}
+            withOuterLines={false}
+            withVerticalLabels={true}
+            withHorizontalLabels={true}
+            fromZero={true}
+            withShadow={false}
+            withDots={true}
+            onDataPointClick={handleDataPointClick}
+          />
+          {showVerticalLine && (
+            <View
+              style={[
+                styles.verticalLine,
+                { left: verticalLineX }
+              ]}
+              pointerEvents="none"
+            >
+              <View style={styles.verticalLineInner} />
+            </View>
+          )}
+        </View>
+      </View>
       
       {/* Détails du point sélectionné */}
       {selectedPoint && (
@@ -366,9 +361,9 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#ffffff',
     marginVertical: 8,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 16,
+    marginHorizontal: 0,
+    borderRadius: 0,
+    padding: 0,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -384,26 +379,13 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
     marginBottom: 12,
-  },
-  sliderContainer: {
-    marginVertical: 12,
-    paddingHorizontal: 8,
-  },
-  sliderHint: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 8,
-    fontStyle: 'italic',
-  },
-  slider: {
-    width: '100%',
-    height: 40,
+    paddingHorizontal: 16,
+    paddingTop: 16
   },
   selectedPointContainer: {
     backgroundColor: '#F8F9FA',
     marginVertical: 12,
-    marginHorizontal: 4,
+    marginHorizontal: 16,
     borderRadius: 8,
     padding: 12,
     borderWidth: 1,
@@ -424,6 +406,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexWrap: 'wrap',
     marginBottom: 12,
+    paddingHorizontal: 16,
   },
   legendItem: {
     flexDirection: 'row',
@@ -441,11 +424,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
-  chartScrollView: {
+  chartContainer: {
     marginVertical: 8,
+    position: 'relative'
   },
-  chartScrollContent: {
-    paddingRight: 16,
+  chartWrapper: {
+    position: 'relative'
+  },
+  verticalLine: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 2,
+    zIndex: 10,
+    pointerEvents: 'none'
+  },
+  verticalLineInner: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 0, 0, 0.8)',
+    width: 2
   },
   chart: {
     borderRadius: 16,
@@ -455,6 +452,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginTop: 12,
     paddingTop: 12,
+    paddingHorizontal: 16,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
   },

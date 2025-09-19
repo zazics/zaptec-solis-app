@@ -3,9 +3,8 @@
  */
 
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Dimensions, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { LineChart, BarChart } from "react-native-chart-kit";
-import Slider from '@react-native-community/slider';
 import { ChartDataPoint } from "../../types/chart.types";
 
 const screenWidth = Dimensions.get("window").width;
@@ -28,12 +27,13 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
     return null;
   }
 
-  // État pour gérer le point sélectionné via slider
-  const [selectedIndex, setSelectedIndex] = useState<number>(data.length - 1);
+  // État pour gérer le point sélectionné et la ligne verticale
+  const [selectedIndex, setSelectedIndex] = useState<number>(data.length - 1); // Sélectionner le dernier point par défaut
+  const [verticalLineX, setVerticalLineX] = useState<number>(0);
+  const [showVerticalLine, setShowVerticalLine] = useState<boolean>(false);
 
   // Calculer les paramètres d'échantillonnage
   const calculateSamplingParams = () => {
-
     let maxPoints = 12;
     let labelStep = 1;
 
@@ -55,7 +55,6 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
 
   // Préparer les données pour react-native-chart-kit
   const prepareChartData = () => {
-
     const sampledData = data.filter((_, index) => index % step === 0);
 
     const labels = sampledData.map((point, index) => {
@@ -64,9 +63,9 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
 
       // Utiliser la période si fournie, sinon détecter le type de données
       if (period === "quarterly") {
-        // Données par quart d'heure - afficher les labels stratégiquement
-        if (index % labelStep === 0) {
-          return minutes === 0 ? `${date.getHours()}h` : `${date.getHours()}h${minutes.toString().padStart(2, "0")}`;
+        // Données par quart d'heure - afficher seulement les heures pleines
+        if (index % labelStep === 0 && minutes === 0) {
+          return `${date.getHours()}h`;
         }
         return ""; // Label vide pour éviter l'encombrement
       } else if (period === "hourly") {
@@ -89,9 +88,9 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
       } else {
         // Fallback : détecter le type de données par longueur
         if (data.length > 80) {
-          // Données par quart d'heure - afficher les labels stratégiquement
-          if (index % labelStep === 0) {
-            return minutes === 0 ? `${date.getHours()}h` : `${date.getHours()}h${minutes.toString().padStart(2, "0")}`;
+          // Données par quart d'heure - afficher seulement les heures pleines
+          if (index % labelStep === 0 && minutes === 0) {
+            return `${date.getHours()}h`;
           }
           return "";
         } else if (data.length > 20 && data.length <= 24) {
@@ -126,23 +125,26 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
 
   const chartData = prepareChartData();
 
-  // Gestion du clic sur un point pour positionner le slider
-  const handleDataPointClick = (dataPoint: any) => {
+
+  // Gestion du clic sur un point pour afficher les détails
+  const handleDataPointClick = (dataPoint: { index: number; value: number; x: number; y: number }) => {
     const originalDataIndex = dataPoint.index * step;
+    const clickX = dataPoint.x;
+
+    console.log(`Point cliqué: index=${dataPoint.index}, originalIndex=${originalDataIndex}, clickX=${clickX}`);
+
     if (originalDataIndex < data.length) {
       setSelectedIndex(originalDataIndex);
+      setVerticalLineX(clickX);
+      setShowVerticalLine(true);
+
+      // Masquer la ligne après 3 secondes
+      setTimeout(() => setShowVerticalLine(false), 3000);
     }
   };
 
-  // Calculer la largeur du graphique basée sur le nombre de points
-  const calculateChartWidth = () => {
-    const minWidth = screenWidth - 32; // Largeur minimum
-    const pointWidth = period === "quarterly" ? 15 : period === "hourly" ? 25 : 40; // Largeur par point
-    const calculatedWidth = chartData.labels.length * pointWidth;
-    return Math.max(minWidth, calculatedWidth);
-  };
-
-  const chartWidth = calculateChartWidth();
+  // Utiliser la largeur totale de l'écran sans marges
+  const chartWidth = screenWidth; // Largeur complète de l'écran
 
   const chartConfig = {
     backgroundColor: "#ffffff",
@@ -154,8 +156,8 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
       borderRadius: 16
     },
     propsForDots: {
-      r: period === "quarterly" ? "3" : "4", // Smaller dots for dense data
-      strokeWidth: "2",
+      r: period === "quarterly" ? "1" : "2", // Much smaller dots
+      strokeWidth: "1",
       stroke: color,
       fill: color
     },
@@ -163,8 +165,8 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
     formatYLabel: (value: string) => `${value}${unit}`,
     // Reduce label size for daily charts with many data points
     propsForLabels: {
-      fontSize: period === "quarterly" ? 8 : 12, // Smaller font for 15-min data
-    },
+      fontSize: period === "quarterly" ? 8 : 12 // Smaller font for 15-min data
+    }
   };
 
   // Formatage de la date pour l'affichage
@@ -180,72 +182,59 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
     return date.toLocaleString("fr-FR", options);
   };
 
-  // Obtenir le point sélectionné
-  const selectedPoint = data[selectedIndex];
+  // Obtenir le point sélectionné (seulement si un index valide est sélectionné)
+  const selectedPoint = selectedIndex >= 0 && selectedIndex < data.length ? data[selectedIndex] : null;
 
   const Chart = chartType === "line" ? LineChart : BarChart;
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
-      
-      {/* Navigation par slider si on a des données */}
-      {data.length > 1 && (
-        <View style={styles.sliderContainer}>
-          <Text style={styles.sliderHint}>📍 Naviguez avec le curseur ou tapez sur un point du graphique</Text>
-          <Slider
-            style={styles.slider}
-            minimumValue={0}
-            maximumValue={Math.max(0, data.length - 1)}
-            step={1}
-            value={selectedIndex}
-            onValueChange={(value) => setSelectedIndex(Math.round(value))}
-            minimumTrackTintColor={color}
-            maximumTrackTintColor="#E0E0E0"
-          />
-        </View>
-      )}
-      
-      <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.chartScrollView} contentContainerStyle={styles.chartScrollContent}>
-        <Chart
-          data={chartData}
-          width={chartWidth}
-          height={height}
-          chartConfig={chartConfig}
-          bezier={chartType === "line"}
-          style={styles.chart}
-          withVerticalLines={false}
-          withHorizontalLines={true}
-          withInnerLines={false}
-          withOuterLines={false}
-          withVerticalLabels={true}
-          withHorizontalLabels={true}
-          fromZero={true}
-          withShadow={false}
-          withDots={true}
-          onDataPointClick={handleDataPointClick}
-        />
-      </ScrollView>
-      {/* Détails du point sélectionné */}
+
+      {/* Détails du point sélectionné - format compact au-dessus du graphique */}
       {selectedPoint && (
-        <View style={styles.selectedPointContainer}>
-          <Text style={styles.selectedPointTitle}>📊 Point sélectionné ({selectedIndex + 1}/{data.length})</Text>
-          <View style={styles.selectedPointDetails}>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Valeur :</Text>
-              <Text style={[styles.detailValue, { color }]}>
-                {Math.round(selectedPoint.value)} {unit}
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Date/Heure :</Text>
-              <Text style={styles.detailValue}>
-                {formatDateTime(selectedPoint.timestamp)}
-              </Text>
-            </View>
-          </View>
+        <View style={styles.compactSelectedPoint}>
+          <Text style={styles.compactPointText}>
+            {unit === 'W' ? '⚡' : unit === 'kWh' ? '🔋' : '📊'} {new Date(selectedPoint.timestamp).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} = {Math.round(selectedPoint.value)} {unit}
+          </Text>
         </View>
       )}
+
+      <View style={styles.chartContainer}>
+        <View style={styles.chartWrapper}>
+          <Chart
+            data={chartData}
+            width={chartWidth}
+            height={height}
+            chartConfig={chartConfig}
+            bezier={chartType === "line"}
+            style={styles.chart}
+            withVerticalLines={false}
+            withHorizontalLines={true}
+            withInnerLines={false}
+            withOuterLines={false}
+            withVerticalLabels={true}
+            withHorizontalLabels={true}
+            fromZero={true}
+            withShadow={false}
+            withDots={true}
+            onDataPointClick={handleDataPointClick}
+            yAxisLabel={""}
+            yAxisSuffix={""}
+          />
+          {showVerticalLine && (
+            <View
+              style={[
+                styles.verticalLine,
+                { left: verticalLineX }
+              ]}
+              pointerEvents="none"
+            >
+              <View style={styles.verticalLineInner} />
+            </View>
+          )}
+        </View>
+      </View>
 
       {showValues && data.length > 0 && (
         <View style={styles.statsContainer}>
@@ -286,9 +275,9 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#ffffff",
     marginVertical: 8,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 16,
+    marginHorizontal: 0,
+    borderRadius: 0,
+    padding: 0,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -303,47 +292,45 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     textAlign: "center",
-    marginBottom: 12
+    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingTop: 16
   },
-  sliderContainer: {
-    marginVertical: 12,
-    paddingHorizontal: 8,
-  },
-  sliderHint: {
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 8,
-    fontStyle: "italic",
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  selectedPointContainer: {
-    backgroundColor: "#F8F9FA",
-    marginVertical: 12,
-    marginHorizontal: 4,
-    borderRadius: 8,
-    padding: 12,
+  compactSelectedPoint: {
+    backgroundColor: "#F0F8FF",
+    marginVertical: 4,
+    marginHorizontal: 16,
+    borderRadius: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: "#D1E7DD"
   },
-  selectedPointTitle: {
-    fontSize: 14,
+  compactPointText: {
+    fontSize: 13,
     fontWeight: "600",
     color: "#333",
-    textAlign: "center",
-    marginBottom: 8,
+    textAlign: "center"
   },
-  selectedPointDetails: {
-    gap: 4,
+  chartContainer: {
+    marginVertical: 8,
+    position: "relative"
   },
-  chartScrollView: {
-    marginVertical: 8
+  chartWrapper: {
+    position: "relative"
   },
-  chartScrollContent: {
-    paddingRight: 16
+  verticalLine: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    width: 2,
+    zIndex: 10,
+    pointerEvents: "none"
+  },
+  verticalLineInner: {
+    flex: 1,
+    backgroundColor: "rgba(255, 0, 0, 0.8)",
+    width: 2
   },
   chart: {
     borderRadius: 16
@@ -353,6 +340,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     marginTop: 12,
     paddingTop: 12,
+    paddingHorizontal: 16,
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0"
   },
@@ -373,13 +361,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 4,
+    paddingVertical: 4
   },
   detailLabel: {
     fontSize: 14,
     color: "#666",
     fontWeight: "500",
-    flex: 1,
+    flex: 1
   },
   detailValue: {
     fontSize: 14,
