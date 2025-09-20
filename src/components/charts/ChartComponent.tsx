@@ -125,7 +125,6 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
 
   const chartData = prepareChartData();
 
-
   // Gestion du clic sur un point pour afficher les détails
   const handleDataPointClick = (dataPoint: { index: number; value: number; x: number; y: number }) => {
     const originalDataIndex = dataPoint.index * step;
@@ -166,7 +165,10 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
     // Reduce label size for daily charts with many data points
     propsForLabels: {
       fontSize: period === "quarterly" ? 8 : 12 // Smaller font for 15-min data
-    }
+    },
+    // Réduire les marges internes du graphique
+    paddingLeft: 0,
+    paddingRight: 0
   };
 
   // Formatage de la date pour l'affichage
@@ -195,7 +197,7 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
       {selectedPoint && (
         <View style={styles.compactSelectedPoint}>
           <Text style={styles.compactPointText}>
-            {unit === 'W' ? '⚡' : unit === 'kWh' ? '🔋' : '📊'} {new Date(selectedPoint.timestamp).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} = {Math.round(selectedPoint.value)} {unit}
+            {unit === "W" ? "⚡" : unit === "kWh" ? "🔋" : "📊"} {new Date(selectedPoint.timestamp).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} = {Math.round(selectedPoint.value)} {unit}
           </Text>
         </View>
       )}
@@ -223,13 +225,7 @@ const ChartComponent: React.FC<ChartComponentProps> = ({ title, data, color, uni
             yAxisSuffix={""}
           />
           {showVerticalLine && (
-            <View
-              style={[
-                styles.verticalLine,
-                { left: verticalLineX }
-              ]}
-              pointerEvents="none"
-            >
+            <View style={[styles.verticalLine, { left: verticalLineX }]} pointerEvents="none">
               <View style={styles.verticalLineInner} />
             </View>
           )}

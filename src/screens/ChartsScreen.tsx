@@ -225,11 +225,6 @@ const ChartsScreen: React.FC = () => {
 
       {/* Chart Content */}
       <View style={styles.chartContent}>{renderChartContent()}</View>
-
-      {/* Info Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>💡 Utilisez le sélecteur de période et les onglets pour explorer vos données énergétiques</Text>
-      </View>
     </ScrollView>
   );
 };
