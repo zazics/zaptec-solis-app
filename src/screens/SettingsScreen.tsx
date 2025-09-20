@@ -9,18 +9,21 @@ import {
   Alert,
   Switch,
   Modal,
+  FlatList,
 } from 'react-native';
 import { apiService, settingsService } from '../services';
 import { AutomationConfig } from '../types';
 
 const SettingsScreen: React.FC = () => {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isConnectionModalVisible, setIsConnectionModalVisible] = useState(false);
   const [isModeModalVisible, setIsModeModalVisible] = useState(false);
   const [isPriorityLoadModalVisible, setIsPriorityLoadModalVisible] = useState(false);
+  const [isBoostLevelModalVisible, setIsBoostLevelModalVisible] = useState(false);
+  const [isBoostDropdownOpen, setIsBoostDropdownOpen] = useState(false);
   const [newIp, setNewIp] = useState('');
   const [newPort, setNewPort] = useState('3000');
   const [newPriorityLoadReserve, setNewPriorityLoadReserve] = useState<number>(0);
+  const [newBoostLevel, setNewBoostLevel] = useState<number>(0);
   const [currentApiConfig, setCurrentApiConfig] = useState(apiService.getConfig());
   const [automationConfig, setAutomationConfig] = useState<AutomationConfig | null>(null);
   const [selectedMode, setSelectedMode] = useState<'surplus' | 'manual' | 'minimum'>('surplus');
@@ -34,7 +37,6 @@ const SettingsScreen: React.FC = () => {
   const loadSettings = async () => {
     try {
       const settings = await settingsService.loadSettings();
-      setNotificationsEnabled(settings.notificationsEnabled);
       const apiConfig = settingsService.getApiConfig();
       setCurrentApiConfig(apiConfig);
       
@@ -56,6 +58,7 @@ const SettingsScreen: React.FC = () => {
       setAutomationConfig(config);
       setSelectedMode(config.mode);
       setNewPriorityLoadReserve(config.priorityLoadReserve);
+      setNewBoostLevel(config.boostLevel || 0);
     } catch (error) {
       console.error('Erreur lors du chargement de la configuration d\'automatisation:', error);
     }
@@ -149,6 +152,13 @@ const SettingsScreen: React.FC = () => {
     setIsPriorityLoadModalVisible(true);
   };
 
+  const openBoostLevelModal = () => {
+    if (automationConfig) {
+      setNewBoostLevel(automationConfig.boostLevel || 0);
+    }
+    setIsBoostLevelModalVisible(true);
+  };
+
   const saveModeConfiguration = async () => {
     try {
       setIsLoading(true);
@@ -170,6 +180,20 @@ const SettingsScreen: React.FC = () => {
       await loadAutomationConfig(); // Recharger la configuration
       setIsPriorityLoadModalVisible(false);
       Alert.alert('Succès', `Réserve de puissance prioritaire définie à ${newPriorityLoadReserve}W`);
+    } catch (error) {
+      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveBoostLevelConfiguration = async () => {
+    try {
+      setIsLoading(true);
+      await apiService.configureAutomation({ boostLevel: newBoostLevel });
+      await loadAutomationConfig(); // Recharger la configuration
+      setIsBoostLevelModalVisible(false);
+      Alert.alert('Succès', `Boost d'ampérage défini à ${newBoostLevel}A`);
     } catch (error) {
       Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
     } finally {
@@ -256,6 +280,22 @@ const SettingsScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={openBoostLevelModal}
+          disabled={isLoading || !automationConfig}
+        >
+          <View style={styles.settingItemContent}>
+            <View style={styles.settingItemText}>
+              <Text style={styles.settingItemTitle}>Boost d'ampérage</Text>
+              <Text style={styles.settingItemSubtitle}>
+                {automationConfig ? `+${automationConfig.boostLevel || 0}A` : 'Chargement...'}
+              </Text>
+            </View>
+            <Text style={styles.settingItemArrow}>›</Text>
+          </View>
+        </TouchableOpacity>
+
         <View style={styles.settingItem}>
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
@@ -312,25 +352,6 @@ const SettingsScreen: React.FC = () => {
             <Text style={styles.settingItemArrow}>›</Text>
           </View>
         </TouchableOpacity>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Affichage</Text>
-        
-        <View style={styles.settingItem}>
-          <View style={styles.settingItemContent}>
-            <View style={styles.settingItemText}>
-              <Text style={styles.settingItemTitle}>Notifications</Text>
-              <Text style={styles.settingItemSubtitle}>Alertes et notifications</Text>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-              thumbColor={'#FFFFFF'}
-            />
-          </View>
-        </View>
       </View>
 
       <View style={styles.section}>
@@ -530,6 +551,87 @@ const SettingsScreen: React.FC = () => {
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonConfirm]}
                 onPress={savePriorityLoadConfiguration}
+                disabled={isLoading}
+              >
+                <Text style={styles.modalButtonConfirmText}>
+                  {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={isBoostLevelModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsBoostLevelModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Boost d'ampérage</Text>
+
+            <Text style={styles.modalLabel}>Boost en Ampères :</Text>
+
+            <TouchableOpacity
+              style={styles.selectBox}
+              onPress={() => setIsBoostDropdownOpen(!isBoostDropdownOpen)}
+            >
+              <Text style={styles.selectBoxText}>
+                {newBoostLevel === 0 ? 'Aucun boost (0A)' : `+${newBoostLevel}A`}
+              </Text>
+              <Text style={styles.selectBoxArrow}>
+                {isBoostDropdownOpen ? '▲' : '▼'}
+              </Text>
+            </TouchableOpacity>
+
+            {isBoostDropdownOpen && (
+              <View style={styles.dropdown}>
+                <FlatList
+                  data={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+                  keyExtractor={(item) => item.toString()}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.dropdownItem,
+                        newBoostLevel === item && styles.dropdownItemSelected
+                      ]}
+                      onPress={() => {
+                        setNewBoostLevel(item);
+                        setIsBoostDropdownOpen(false);
+                      }}
+                    >
+                      <Text style={[
+                        styles.dropdownItemText,
+                        newBoostLevel === item && styles.dropdownItemTextSelected
+                      ]}>
+                        {item === 0 ? 'Aucun boost (0A)' : `+${item}A`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  style={styles.dropdownList}
+                  showsVerticalScrollIndicator={false}
+                />
+              </View>
+            )}
+
+            <Text style={styles.modalNote}>
+              Ajoute un ampérage supplémentaire (0 à 10A) à la puissance de charge calculée automatiquement. Permet d'augmenter la vitesse de charge au-delà du surplus solaire disponible.
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => setIsBoostLevelModalVisible(false)}
+                disabled={isLoading}
+              >
+                <Text style={styles.modalButtonCancelText}>Annuler</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={saveBoostLevelConfiguration}
                 disabled={isLoading}
               >
                 <Text style={styles.modalButtonConfirmText}>
@@ -755,6 +857,61 @@ const styles = StyleSheet.create({
   modeOptionRadioSelected: {
     borderColor: '#007AFF',
     backgroundColor: '#007AFF',
+  },
+  selectBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
+  },
+  selectBoxText: {
+    fontSize: 16,
+    color: '#000000',
+    flex: 1,
+  },
+  selectBoxArrow: {
+    fontSize: 14,
+    color: '#8E8E93',
+    marginLeft: 8,
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
+    maxHeight: 200,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  dropdownList: {
+    flexGrow: 0,
+  },
+  dropdownItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  dropdownItemSelected: {
+    backgroundColor: '#F0F8FF',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#000000',
+  },
+  dropdownItemTextSelected: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
 });
 

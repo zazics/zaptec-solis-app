@@ -129,4 +129,5 @@ export interface AutomationConfig {
   maxChargingPower: number;
   priorityLoadReserve: number;
   neverStopCharging: boolean;
+  boostLevel: number;
 }
