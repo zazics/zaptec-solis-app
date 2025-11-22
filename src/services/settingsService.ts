@@ -21,7 +21,7 @@ const getEnvVar = (envVar: string, extraKey: string, fallback: string = ""): str
 const getDefaultApiConfig = (): ApiConfig => {
   const simulationMode = getEnvVar(SIMULATION_MODE, "SIMULATION_MODE", "false") === "true";
   return {
-    baseUrl: simulationMode ? "http://localhost:3000" : getEnvVar(API_BASE_URL, "API_BASE_URL", "http://192.168.0.108:3000"),
+    baseUrl: simulationMode ? "http://localhost:3000" : getEnvVar(API_BASE_URL, "API_BASE_URL", "http://192.168.0.151:3000"),
     timeout: parseInt(getEnvVar(API_TIMEOUT, "API_TIMEOUT", "10000")),
     useHttps: getEnvVar(API_USE_HTTPS, "API_USE_HTTPS", "false") === "true",
     simulationMode: simulationMode,
@@ -146,7 +146,7 @@ export class SettingsService {
    */
   async toggleSimulationMode(): Promise<ApiConfig> {
     const simulationMode = !this.settings.simulationMode;
-    const baseUrl = simulationMode ? "http://localhost:3000" : API_BASE_URL || "http://192.168.0.108:3000";
+    const baseUrl = simulationMode ? "http://localhost:3000" : API_BASE_URL || "http://192.168.0.151:3000";
 
     await this.saveSettings({ simulationMode });
     await this.updateApiConfig({ baseUrl, simulationMode });
@@ -176,7 +176,7 @@ export class SettingsService {
    */
   getDefaultBackendUrl(): string {
     const simulationMode = SIMULATION_MODE === "true" || false;
-    return simulationMode ? "http://localhost:3000" : API_BASE_URL || "http://192.168.0.108:3000";
+    return simulationMode ? "http://localhost:3000" : API_BASE_URL || "http://192.168.0.151:3000";
   }
 
   /**

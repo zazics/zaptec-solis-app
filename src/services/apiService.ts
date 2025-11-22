@@ -381,7 +381,7 @@ const getEnvVar = (envVar: string, extraKey: string, fallback: string = ""): str
 // Default configuration (loaded from environment variables or app.json)
 const simulationMode = getEnvVar(SIMULATION_MODE, "SIMULATION_MODE", "false") === "true";
 const defaultConfig: ApiConfig = {
-  baseUrl: simulationMode ? "http://localhost:3000" : getEnvVar(API_BASE_URL, "API_BASE_URL", "http://192.168.1.100:3000"),
+  baseUrl: simulationMode ? "http://localhost:3000" : getEnvVar(API_BASE_URL, "API_BASE_URL", "http://192.168.0.151:3000"),
   timeout: parseInt(getEnvVar(API_TIMEOUT, "API_TIMEOUT", "10000")),
   useHttps: getEnvVar(API_USE_HTTPS, "API_USE_HTTPS", "false") === "true",
   simulationMode: simulationMode,
