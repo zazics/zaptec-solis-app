@@ -1,18 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  Switch,
-  Modal,
-  FlatList,
-} from 'react-native';
-import { apiService, settingsService } from '../services';
-import { AutomationConfig } from '../types';
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, Switch, Modal, FlatList } from "react-native";
+import { apiService, settingsService } from "../services";
+import { AutomationConfig } from "../types";
 
 const SettingsScreen: React.FC = () => {
   const [isConnectionModalVisible, setIsConnectionModalVisible] = useState(false);
@@ -20,15 +9,15 @@ const SettingsScreen: React.FC = () => {
   const [isPriorityLoadModalVisible, setIsPriorityLoadModalVisible] = useState(false);
   const [isBoostLevelModalVisible, setIsBoostLevelModalVisible] = useState(false);
   const [isBoostDropdownOpen, setIsBoostDropdownOpen] = useState(false);
-  const [newIp, setNewIp] = useState('');
-  const [newPort, setNewPort] = useState('3000');
+  const [newIp, setNewIp] = useState("");
+  const [newPort, setNewPort] = useState("3000");
   const [newPriorityLoadReserve, setNewPriorityLoadReserve] = useState<number>(0);
   const [newBoostLevel, setNewBoostLevel] = useState<number>(0);
   const [currentApiConfig, setCurrentApiConfig] = useState(apiService.getConfig());
   const [automationConfig, setAutomationConfig] = useState<AutomationConfig | null>(null);
-  const [selectedMode, setSelectedMode] = useState<'surplus' | 'manual' | 'minimum'>('surplus');
+  const [selectedMode, setSelectedMode] = useState<"surplus" | "manual" | "minimum">("surplus");
   const [isLoading, setIsLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'failed'>('unknown');
+  const [connectionStatus, setConnectionStatus] = useState<"unknown" | "connected" | "failed">("unknown");
 
   useEffect(() => {
     loadSettings();
@@ -39,7 +28,7 @@ const SettingsScreen: React.FC = () => {
       const settings = await settingsService.loadSettings();
       const apiConfig = settingsService.getApiConfig();
       setCurrentApiConfig(apiConfig);
-      
+
       // Pré-remplir les champs IP avec la configuration actuelle
       const { ip, port } = settingsService.parseBackendUrl(apiConfig.baseUrl);
       setNewIp(ip);
@@ -48,7 +37,7 @@ const SettingsScreen: React.FC = () => {
       // Charger la configuration d'automatisation
       await loadAutomationConfig();
     } catch (error) {
-      console.error('Erreur lors du chargement des paramètres:', error);
+      console.error("Erreur lors du chargement des paramètres:", error);
     }
   };
 
@@ -60,7 +49,7 @@ const SettingsScreen: React.FC = () => {
       setNewPriorityLoadReserve(config.priorityLoadReserve);
       setNewBoostLevel(config.boostLevel || 0);
     } catch (error) {
-      console.error('Erreur lors du chargement de la configuration d\'automatisation:', error);
+      console.error("Erreur lors du chargement de la configuration d'automatisation:", error);
     }
   };
 
@@ -68,14 +57,11 @@ const SettingsScreen: React.FC = () => {
     setIsLoading(true);
     try {
       const isConnected = await apiService.testConnection();
-      setConnectionStatus(isConnected ? 'connected' : 'failed');
-      Alert.alert(
-        'Test de connexion', 
-        isConnected ? 'Connexion réussie!' : 'Connexion échouée. Vérifiez l\'adresse IP et la disponibilité du serveur.'
-      );
+      setConnectionStatus(isConnected ? "connected" : "failed");
+      Alert.alert("Test de connexion", isConnected ? "Connexion réussie!" : "Connexion échouée. Vérifiez l'adresse IP et la disponibilité du serveur.");
     } catch (error) {
-      setConnectionStatus('failed');
-      Alert.alert('Test de connexion', 'Erreur lors du test de connexion');
+      setConnectionStatus("failed");
+      Alert.alert("Test de connexion", "Erreur lors du test de connexion");
     } finally {
       setIsLoading(false);
     }
@@ -83,25 +69,25 @@ const SettingsScreen: React.FC = () => {
 
   const saveIpConfiguration = async () => {
     if (!newIp.trim()) {
-      Alert.alert('Erreur', 'Veuillez entrer une adresse IP');
+      Alert.alert("Erreur", "Veuillez entrer une adresse IP");
       return;
     }
 
     const port = parseInt(newPort) || 3000;
-    
+
     try {
       setIsLoading(true);
       const newApiConfig = await settingsService.setCustomBackendUrl(newIp.trim(), port);
-      
+
       // Mettre à jour la configuration de l'API service
       apiService.updateConfig(newApiConfig);
       setCurrentApiConfig(newApiConfig);
-      
+
       setIsConnectionModalVisible(false);
-      setConnectionStatus('unknown');
-      Alert.alert('Succès', 'Configuration IP sauvegardée');
+      setConnectionStatus("unknown");
+      Alert.alert("Succès", "Configuration IP sauvegardée");
     } catch (error) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+      Alert.alert("Erreur", error instanceof Error ? error.message : "Erreur lors de la sauvegarde");
     } finally {
       setIsLoading(false);
     }
@@ -111,24 +97,23 @@ const SettingsScreen: React.FC = () => {
     try {
       setIsLoading(true);
       const defaultConfig = await settingsService.resetToDefaultUrl();
-      
+
       // Mettre à jour la configuration de l'API service
       apiService.updateConfig(defaultConfig);
       setCurrentApiConfig(defaultConfig);
-      
+
       const { ip, port } = settingsService.parseBackendUrl(defaultConfig.baseUrl);
       setNewIp(ip);
       setNewPort(port.toString());
-      
-      setConnectionStatus('unknown');
-      Alert.alert('Succès', 'Configuration réinitialisée à la valeur par défaut');
+
+      setConnectionStatus("unknown");
+      Alert.alert("Succès", "Configuration réinitialisée à la valeur par défaut");
     } catch (error) {
-      Alert.alert('Erreur', 'Erreur lors de la réinitialisation');
+      Alert.alert("Erreur", "Erreur lors de la réinitialisation");
     } finally {
       setIsLoading(false);
     }
   };
-
 
   const openConnectionModal = () => {
     const { ip, port } = settingsService.parseBackendUrl(currentApiConfig.baseUrl);
@@ -136,7 +121,6 @@ const SettingsScreen: React.FC = () => {
     setNewPort(port.toString());
     setIsConnectionModalVisible(true);
   };
-
 
   const openModeModal = () => {
     if (automationConfig) {
@@ -165,9 +149,9 @@ const SettingsScreen: React.FC = () => {
       await apiService.setAutomationMode(selectedMode);
       await loadAutomationConfig(); // Recharger la configuration
       setIsModeModalVisible(false);
-      Alert.alert('Succès', `Mode ${getModeLabel(selectedMode)} activé`);
+      Alert.alert("Succès", `Mode ${getModeLabel(selectedMode)} activé`);
     } catch (error) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+      Alert.alert("Erreur", error instanceof Error ? error.message : "Erreur lors de la sauvegarde");
     } finally {
       setIsLoading(false);
     }
@@ -179,9 +163,9 @@ const SettingsScreen: React.FC = () => {
       await apiService.configureAutomation({ priorityLoadReserve: newPriorityLoadReserve });
       await loadAutomationConfig(); // Recharger la configuration
       setIsPriorityLoadModalVisible(false);
-      Alert.alert('Succès', `Réserve de puissance prioritaire définie à ${newPriorityLoadReserve}W`);
+      Alert.alert("Succès", `Réserve de puissance prioritaire définie à ${newPriorityLoadReserve}W`);
     } catch (error) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+      Alert.alert("Erreur", error instanceof Error ? error.message : "Erreur lors de la sauvegarde");
     } finally {
       setIsLoading(false);
     }
@@ -193,9 +177,9 @@ const SettingsScreen: React.FC = () => {
       await apiService.configureAutomation({ boostLevel: newBoostLevel });
       await loadAutomationConfig(); // Recharger la configuration
       setIsBoostLevelModalVisible(false);
-      Alert.alert('Succès', `Boost d'ampérage défini à ${newBoostLevel}A`);
+      Alert.alert("Succès", `Boost d'ampérage défini à ${newBoostLevel}A`);
     } catch (error) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+      Alert.alert("Erreur", error instanceof Error ? error.message : "Erreur lors de la sauvegarde");
     } finally {
       setIsLoading(false);
     }
@@ -206,34 +190,37 @@ const SettingsScreen: React.FC = () => {
       setIsLoading(true);
       await apiService.configureAutomation({ neverStopCharging: value });
       await loadAutomationConfig(); // Recharger la configuration
-      Alert.alert(
-        'Succès',
-        value
-          ? 'La charge ne s\'arrêtera plus automatiquement'
-          : 'La charge pourra être arrêtée selon le mode sélectionné'
-      );
+      Alert.alert("Succès", value ? "La charge ne s'arrêtera plus automatiquement" : "La charge pourra être arrêtée selon le mode sélectionné");
     } catch (error) {
-      Alert.alert('Erreur', error instanceof Error ? error.message : 'Erreur lors de la sauvegarde');
+      Alert.alert("Erreur", error instanceof Error ? error.message : "Erreur lors de la sauvegarde");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getModeLabel = (mode: 'surplus' | 'manual' | 'minimum') => {
+  const getModeLabel = (mode: "surplus" | "manual" | "minimum") => {
     switch (mode) {
-      case 'surplus': return 'Surplus solaire';
-      case 'manual': return 'Manuel';
-      case 'minimum': return 'Minimum 6A';
-      default: return mode;
+      case "surplus":
+        return "Surplus solaire";
+      case "manual":
+        return "Manuel";
+      case "minimum":
+        return "Minimum 6A";
+      default:
+        return mode;
     }
   };
 
-  const getModeDescription = (mode: 'surplus' | 'manual' | 'minimum') => {
+  const getModeDescription = (mode: "surplus" | "manual" | "minimum") => {
     switch (mode) {
-      case 'surplus': return 'Charge uniquement avec le surplus d\'énergie solaire';
-      case 'manual': return 'Contrôle manuel du chargeur';
-      case 'minimum': return 'Charge à 6A si assez de puissance solaire';
-      default: return '';
+      case "surplus":
+        return "Charge uniquement avec le surplus d'énergie solaire";
+      case "manual":
+        return "Contrôle manuel du chargeur";
+      case "minimum":
+        return "Charge à 6A si assez de puissance solaire";
+      default:
+        return "";
     }
   };
 
@@ -246,51 +233,32 @@ const SettingsScreen: React.FC = () => {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Configuration serveur</Text>
-        
 
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={openModeModal}
-          disabled={isLoading || !automationConfig}
-        >
+        <TouchableOpacity style={styles.settingItem} onPress={openModeModal} disabled={isLoading || !automationConfig}>
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Mode d'automatisation</Text>
-              <Text style={styles.settingItemSubtitle}>
-                {automationConfig ? getModeLabel(automationConfig.mode) : 'Chargement...'}
-              </Text>
+              <Text style={styles.settingItemSubtitle}>{automationConfig ? getModeLabel(automationConfig.mode) : "Chargement..."}</Text>
             </View>
             <Text style={styles.settingItemArrow}>›</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.settingItem}
-          onPress={openPriorityLoadModal}
-          disabled={isLoading || !automationConfig}
-        >
+        <TouchableOpacity style={styles.settingItem} onPress={openPriorityLoadModal} disabled={isLoading || !automationConfig}>
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Réserve de puissance prioritaire</Text>
-              <Text style={styles.settingItemSubtitle}>
-                {automationConfig ? `${automationConfig.priorityLoadReserve}W` : 'Chargement...'}
-              </Text>
+              <Text style={styles.settingItemSubtitle}>{automationConfig ? `${automationConfig.priorityLoadReserve}W` : "Chargement..."}</Text>
             </View>
             <Text style={styles.settingItemArrow}>›</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.settingItem}
-          onPress={openBoostLevelModal}
-          disabled={isLoading || !automationConfig}
-        >
+        <TouchableOpacity style={styles.settingItem} onPress={openBoostLevelModal} disabled={isLoading || !automationConfig}>
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Boost d'ampérage</Text>
-              <Text style={styles.settingItemSubtitle}>
-                {automationConfig ? `+${automationConfig.boostLevel || 0}A` : 'Chargement...'}
-              </Text>
+              <Text style={styles.settingItemSubtitle}>{automationConfig ? `+${automationConfig.boostLevel || 0}A` : "Chargement..."}</Text>
             </View>
             <Text style={styles.settingItemArrow}>›</Text>
           </View>
@@ -300,50 +268,25 @@ const SettingsScreen: React.FC = () => {
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Ne jamais arrêter la charge</Text>
-              <Text style={styles.settingItemSubtitle}>
-                {automationConfig?.neverStopCharging
-                  ? 'La charge ne s\'arrêtera jamais une fois démarrée'
-                  : 'La charge peut être arrêtée selon le mode sélectionné'}
-              </Text>
+              <Text style={styles.settingItemSubtitle}>{automationConfig?.neverStopCharging ? "La charge ne s'arrêtera jamais une fois démarrée" : "La charge peut être arrêtée selon le mode sélectionné"}</Text>
             </View>
-            <Switch
-              value={automationConfig?.neverStopCharging || false}
-              onValueChange={toggleNeverStopCharging}
-              disabled={isLoading || !automationConfig}
-              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-              thumbColor={'#FFFFFF'}
-            />
+            <Switch value={automationConfig?.neverStopCharging || false} onValueChange={toggleNeverStopCharging} disabled={isLoading || !automationConfig} trackColor={{ false: "#E5E5EA", true: "#34C759" }} thumbColor={"#FFFFFF"} />
           </View>
         </View>
 
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={openConnectionModal}
-          disabled={isLoading}
-        >
+        <TouchableOpacity style={styles.settingItem} onPress={openConnectionModal} disabled={isLoading}>
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Tester la connexion</Text>
-              <Text style={[
-                styles.settingItemSubtitle,
-                connectionStatus === 'connected' && { color: '#34C759' },
-                connectionStatus === 'failed' && { color: '#FF3B30' }
-              ]}>
-                {isLoading ? 'Test en cours...' : 
-                 connectionStatus === 'connected' ? 'Connexion OK' :
-                 connectionStatus === 'failed' ? 'Connexion échouée' :
-                 'Configurer et tester la connexion'}
+              <Text style={[styles.settingItemSubtitle, connectionStatus === "connected" && { color: "#34C759" }, connectionStatus === "failed" && { color: "#FF3B30" }]}>
+                {isLoading ? "Test en cours..." : connectionStatus === "connected" ? "Connexion OK" : connectionStatus === "failed" ? "Connexion échouée" : "Configurer et tester la connexion"}
               </Text>
             </View>
             <Text style={styles.settingItemArrow}>›</Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={resetToDefault}
-          disabled={isLoading}
-        >
+        <TouchableOpacity style={styles.settingItem} onPress={resetToDefault} disabled={isLoading}>
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Réinitialiser la configuration</Text>
@@ -356,173 +299,92 @@ const SettingsScreen: React.FC = () => {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Application</Text>
-        
+
         <View style={styles.settingItem}>
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Version</Text>
-              <Text style={styles.settingItemSubtitle}>1.0.0</Text>
+              <Text style={styles.settingItemSubtitle}>1.0.1</Text>
             </View>
-            <Text style={styles.settingItemValue}>1.0.0</Text>
+            <Text style={styles.settingItemValue}>1.0.1</Text>
           </View>
         </View>
       </View>
 
-      <Modal
-        visible={isConnectionModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsConnectionModalVisible(false)}
-      >
+      <Modal visible={isConnectionModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsConnectionModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Configuration et test de connexion</Text>
-            
+
             <Text style={styles.modalLabel}>Adresse IP</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={newIp}
-              onChangeText={setNewIp}
-              placeholder="192.168.0.108"
-              keyboardType="numeric"
-            />
-            
+            <TextInput style={styles.modalInput} value={newIp} onChangeText={setNewIp} placeholder="192.168.0.108" keyboardType="numeric" />
+
             <Text style={styles.modalLabel}>Port</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={newPort}
-              onChangeText={setNewPort}
-              placeholder="3000"
-              keyboardType="numeric"
-            />
-            
+            <TextInput style={styles.modalInput} value={newPort} onChangeText={setNewPort} placeholder="3000" keyboardType="numeric" />
+
             <Text style={styles.modalNote}>
-              URL finale : http://{newIp || '192.168.0.108'}:{newPort || '3000'}
+              URL finale : http://{newIp || "192.168.0.108"}:{newPort || "3000"}
             </Text>
-            
+
             {/* Status de connexion */}
             <View style={styles.connectionStatus}>
-              <Text style={[
-                styles.connectionStatusText,
-                connectionStatus === 'connected' && { color: '#34C759' },
-                connectionStatus === 'failed' && { color: '#FF3B30' }
-              ]}>
-                {isLoading ? '🔄 Test en cours...' : 
-                 connectionStatus === 'connected' ? '✅ Connexion réussie' :
-                 connectionStatus === 'failed' ? '❌ Connexion échouée' :
-                 '⚪ Prêt à tester'}
+              <Text style={[styles.connectionStatusText, connectionStatus === "connected" && { color: "#34C759" }, connectionStatus === "failed" && { color: "#FF3B30" }]}>
+                {isLoading ? "🔄 Test en cours..." : connectionStatus === "connected" ? "✅ Connexion réussie" : connectionStatus === "failed" ? "❌ Connexion échouée" : "⚪ Prêt à tester"}
               </Text>
             </View>
-            
+
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setIsConnectionModalVisible(false)}
-                disabled={isLoading}
-              >
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => setIsConnectionModalVisible(false)} disabled={isLoading}>
                 <Text style={styles.modalButtonCancelText}>Annuler</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonTest]}
-                onPress={testConnection}
-                disabled={isLoading}
-              >
-                <Text style={styles.modalButtonTestText}>
-                  {isLoading ? 'Test...' : 'Tester'}
-                </Text>
+
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonTest]} onPress={testConnection} disabled={isLoading}>
+                <Text style={styles.modalButtonTestText}>{isLoading ? "Test..." : "Tester"}</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={saveIpConfiguration}
-                disabled={isLoading}
-              >
-                <Text style={styles.modalButtonConfirmText}>
-                  {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
-                </Text>
+
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={saveIpConfiguration} disabled={isLoading}>
+                <Text style={styles.modalButtonConfirmText}>{isLoading ? "Sauvegarde..." : "Sauvegarder"}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-
-      <Modal
-        visible={isModeModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsModeModalVisible(false)}
-      >
+      <Modal visible={isModeModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsModeModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Mode d'automatisation</Text>
-            
+
             <Text style={styles.modalLabel}>Sélectionnez un mode :</Text>
-            
-            {(['surplus', 'manual', 'minimum'] as const).map((mode) => (
-              <TouchableOpacity
-                key={mode}
-                style={[
-                  styles.modeOption,
-                  selectedMode === mode && styles.modeOptionSelected
-                ]}
-                onPress={() => setSelectedMode(mode)}
-              >
+
+            {(["surplus", "manual", "minimum"] as const).map((mode) => (
+              <TouchableOpacity key={mode} style={[styles.modeOption, selectedMode === mode && styles.modeOptionSelected]} onPress={() => setSelectedMode(mode)}>
                 <View style={styles.modeOptionContent}>
-                  <Text style={[
-                    styles.modeOptionTitle,
-                    selectedMode === mode && styles.modeOptionTitleSelected
-                  ]}>
-                    {getModeLabel(mode)}
-                  </Text>
-                  <Text style={[
-                    styles.modeOptionDescription,
-                    selectedMode === mode && styles.modeOptionDescriptionSelected
-                  ]}>
-                    {getModeDescription(mode)}
-                  </Text>
+                  <Text style={[styles.modeOptionTitle, selectedMode === mode && styles.modeOptionTitleSelected]}>{getModeLabel(mode)}</Text>
+                  <Text style={[styles.modeOptionDescription, selectedMode === mode && styles.modeOptionDescriptionSelected]}>{getModeDescription(mode)}</Text>
                 </View>
-                <View style={[
-                  styles.modeOptionRadio,
-                  selectedMode === mode && styles.modeOptionRadioSelected
-                ]} />
+                <View style={[styles.modeOptionRadio, selectedMode === mode && styles.modeOptionRadioSelected]} />
               </TouchableOpacity>
             ))}
-            
+
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setIsModeModalVisible(false)}
-                disabled={isLoading}
-              >
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => setIsModeModalVisible(false)} disabled={isLoading}>
                 <Text style={styles.modalButtonCancelText}>Annuler</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={saveModeConfiguration}
-                disabled={isLoading}
-              >
-                <Text style={styles.modalButtonConfirmText}>
-                  {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
-                </Text>
+
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={saveModeConfiguration} disabled={isLoading}>
+                <Text style={styles.modalButtonConfirmText}>{isLoading ? "Sauvegarde..." : "Sauvegarder"}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      <Modal
-        visible={isPriorityLoadModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsPriorityLoadModalVisible(false)}
-      >
+      <Modal visible={isPriorityLoadModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsPriorityLoadModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Réserve de puissance prioritaire</Text>
-            
+
             <Text style={styles.modalLabel}>Puissance en Watts :</Text>
             <TextInput
               style={styles.modalInput}
@@ -534,56 +396,32 @@ const SettingsScreen: React.FC = () => {
               placeholder="0"
               keyboardType="numeric"
             />
-            
-            <Text style={styles.modalNote}>
-              Définit la puissance minimum à réserver pour les charges prioritaires de la maison (éclairage, frigo, etc.) avant d'envoyer le surplus au chargeur.
-            </Text>
-            
+
+            <Text style={styles.modalNote}>Définit la puissance minimum à réserver pour les charges prioritaires de la maison (éclairage, frigo, etc.) avant d'envoyer le surplus au chargeur.</Text>
+
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setIsPriorityLoadModalVisible(false)}
-                disabled={isLoading}
-              >
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => setIsPriorityLoadModalVisible(false)} disabled={isLoading}>
                 <Text style={styles.modalButtonCancelText}>Annuler</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={savePriorityLoadConfiguration}
-                disabled={isLoading}
-              >
-                <Text style={styles.modalButtonConfirmText}>
-                  {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
-                </Text>
+
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={savePriorityLoadConfiguration} disabled={isLoading}>
+                <Text style={styles.modalButtonConfirmText}>{isLoading ? "Sauvegarde..." : "Sauvegarder"}</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      <Modal
-        visible={isBoostLevelModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsBoostLevelModalVisible(false)}
-      >
+      <Modal visible={isBoostLevelModalVisible} transparent={true} animationType="slide" onRequestClose={() => setIsBoostLevelModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Boost d'ampérage</Text>
 
             <Text style={styles.modalLabel}>Boost en Ampères :</Text>
 
-            <TouchableOpacity
-              style={styles.selectBox}
-              onPress={() => setIsBoostDropdownOpen(!isBoostDropdownOpen)}
-            >
-              <Text style={styles.selectBoxText}>
-                {newBoostLevel === 0 ? 'Aucun boost (0A)' : `+${newBoostLevel}A`}
-              </Text>
-              <Text style={styles.selectBoxArrow}>
-                {isBoostDropdownOpen ? '▲' : '▼'}
-              </Text>
+            <TouchableOpacity style={styles.selectBox} onPress={() => setIsBoostDropdownOpen(!isBoostDropdownOpen)}>
+              <Text style={styles.selectBoxText}>{newBoostLevel === 0 ? "Aucun boost (0A)" : `+${newBoostLevel}A`}</Text>
+              <Text style={styles.selectBoxArrow}>{isBoostDropdownOpen ? "▲" : "▼"}</Text>
             </TouchableOpacity>
 
             {isBoostDropdownOpen && (
@@ -593,21 +431,13 @@ const SettingsScreen: React.FC = () => {
                   keyExtractor={(item) => item.toString()}
                   renderItem={({ item }) => (
                     <TouchableOpacity
-                      style={[
-                        styles.dropdownItem,
-                        newBoostLevel === item && styles.dropdownItemSelected
-                      ]}
+                      style={[styles.dropdownItem, newBoostLevel === item && styles.dropdownItemSelected]}
                       onPress={() => {
                         setNewBoostLevel(item);
                         setIsBoostDropdownOpen(false);
                       }}
                     >
-                      <Text style={[
-                        styles.dropdownItemText,
-                        newBoostLevel === item && styles.dropdownItemTextSelected
-                      ]}>
-                        {item === 0 ? 'Aucun boost (0A)' : `+${item}A`}
-                      </Text>
+                      <Text style={[styles.dropdownItemText, newBoostLevel === item && styles.dropdownItemTextSelected]}>{item === 0 ? "Aucun boost (0A)" : `+${item}A`}</Text>
                     </TouchableOpacity>
                   )}
                   style={styles.dropdownList}
@@ -616,27 +446,15 @@ const SettingsScreen: React.FC = () => {
               </View>
             )}
 
-            <Text style={styles.modalNote}>
-              Ajoute un ampérage supplémentaire (0 à 10A) à la puissance de charge calculée automatiquement. Permet d'augmenter la vitesse de charge au-delà du surplus solaire disponible.
-            </Text>
+            <Text style={styles.modalNote}>Ajoute un ampérage supplémentaire (0 à 10A) à la puissance de charge calculée automatiquement. Permet d'augmenter la vitesse de charge au-delà du surplus solaire disponible.</Text>
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => setIsBoostLevelModalVisible(false)}
-                disabled={isLoading}
-              >
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => setIsBoostLevelModalVisible(false)} disabled={isLoading}>
                 <Text style={styles.modalButtonCancelText}>Annuler</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={saveBoostLevelConfiguration}
-                disabled={isLoading}
-              >
-                <Text style={styles.modalButtonConfirmText}>
-                  {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
-                </Text>
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonConfirm]} onPress={saveBoostLevelConfiguration} disabled={isLoading}>
+                <Text style={styles.modalButtonConfirmText}>{isLoading ? "Sauvegarde..." : "Sauvegarder"}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -649,270 +467,270 @@ const SettingsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: "#F2F2F7"
   },
   header: {
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA"
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#000000",
+    textAlign: "center"
   },
   subtitle: {
     fontSize: 14,
-    color: '#8E8E93',
-    textAlign: 'center',
-    marginTop: 4,
+    color: "#8E8E93",
+    textAlign: "center",
+    marginTop: 4
   },
   section: {
     marginTop: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     marginHorizontal: 16,
     borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000000',
+    overflow: "hidden",
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 3
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    backgroundColor: '#F8F9FA',
+    fontWeight: "600",
+    color: "#000000",
+    backgroundColor: "#F8F9FA",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA"
   },
   settingItem: {
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: "#E5E5EA"
   },
   settingItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 12
   },
   settingItemText: {
-    flex: 1,
+    flex: 1
   },
   settingItemTitle: {
     fontSize: 16,
-    color: '#000000',
-    marginBottom: 2,
+    color: "#000000",
+    marginBottom: 2
   },
   settingItemSubtitle: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: "#8E8E93"
   },
   settingItemValue: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: "#8E8E93"
   },
   settingItemArrow: {
     fontSize: 18,
-    color: '#C7C7CC',
-    marginLeft: 8,
+    color: "#C7C7CC",
+    marginLeft: 8
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center"
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 20,
-    width: '80%',
-    maxWidth: 350,
+    width: "80%",
+    maxWidth: 350
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 20,
+    fontWeight: "600",
+    color: "#000000",
+    textAlign: "center",
+    marginBottom: 20
   },
   modalLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#000000',
+    fontWeight: "500",
+    color: "#000000",
     marginBottom: 8,
-    marginTop: 12,
+    marginTop: 12
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: "#E5E5EA",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    marginBottom: 12,
+    marginBottom: 12
   },
   modalNote: {
     fontSize: 12,
-    color: '#8E8E93',
-    fontStyle: 'italic',
-    textAlign: 'center',
+    color: "#8E8E93",
+    fontStyle: "italic",
+    textAlign: "center",
     marginBottom: 20,
-    paddingHorizontal: 8,
+    paddingHorizontal: 8
   },
   modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8
   },
   modalButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center"
   },
   modalButtonCancel: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: "#E5E5EA"
   },
   modalButtonConfirm: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF"
   },
   modalButtonTest: {
-    backgroundColor: '#FF9500',
+    backgroundColor: "#FF9500"
   },
   modalButtonCancelText: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: "#8E8E93"
   },
   modalButtonTestText: {
     fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600"
   },
   modalButtonConfirmText: {
     fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600"
   },
   connectionStatus: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: "#F8F9FA",
     padding: 12,
     borderRadius: 8,
     marginVertical: 12,
-    alignItems: 'center',
+    alignItems: "center"
   },
   connectionStatusText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#8E8E93',
+    fontWeight: "500",
+    color: "#8E8E93"
   },
   modeOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginVertical: 4,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
-    backgroundColor: '#FFFFFF',
+    borderColor: "#E5E5EA",
+    backgroundColor: "#FFFFFF"
   },
   modeOptionSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#F0F8FF',
+    borderColor: "#007AFF",
+    backgroundColor: "#F0F8FF"
   },
   modeOptionContent: {
-    flex: 1,
+    flex: 1
   },
   modeOptionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 4,
+    fontWeight: "600",
+    color: "#000000",
+    marginBottom: 4
   },
   modeOptionTitleSelected: {
-    color: '#007AFF',
+    color: "#007AFF"
   },
   modeOptionDescription: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: "#8E8E93"
   },
   modeOptionDescriptionSelected: {
-    color: '#005AC1',
+    color: "#005AC1"
   },
   modeOptionRadio: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#E5E5EA',
-    backgroundColor: '#FFFFFF',
+    borderColor: "#E5E5EA",
+    backgroundColor: "#FFFFFF"
   },
   modeOptionRadioSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#007AFF',
+    borderColor: "#007AFF",
+    backgroundColor: "#007AFF"
   },
   selectBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: "#E5E5EA",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    marginBottom: 12,
+    backgroundColor: "#FFFFFF",
+    marginBottom: 12
   },
   selectBoxText: {
     fontSize: 16,
-    color: '#000000',
-    flex: 1,
+    color: "#000000",
+    flex: 1
   },
   selectBoxArrow: {
     fontSize: 14,
-    color: '#8E8E93',
-    marginLeft: 8,
+    color: "#8E8E93",
+    marginLeft: 8
   },
   dropdown: {
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: "#E5E5EA",
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     marginBottom: 12,
     maxHeight: 200,
-    shadowColor: '#000000',
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 3
   },
   dropdownList: {
-    flexGrow: 0,
+    flexGrow: 0
   },
   dropdownItem: {
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0"
   },
   dropdownItemSelected: {
-    backgroundColor: '#F0F8FF',
+    backgroundColor: "#F0F8FF"
   },
   dropdownItemText: {
     fontSize: 16,
-    color: '#000000',
+    color: "#000000"
   },
   dropdownItemTextSelected: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
+    color: "#007AFF",
+    fontWeight: "600"
+  }
 });
 
 export default SettingsScreen;
