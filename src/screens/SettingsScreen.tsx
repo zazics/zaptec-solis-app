@@ -304,9 +304,9 @@ const SettingsScreen: React.FC = () => {
           <View style={styles.settingItemContent}>
             <View style={styles.settingItemText}>
               <Text style={styles.settingItemTitle}>Version</Text>
-              <Text style={styles.settingItemSubtitle}>1.0.1</Text>
+              <Text style={styles.settingItemSubtitle}>1.0.2</Text>
             </View>
-            <Text style={styles.settingItemValue}>1.0.1</Text>
+            <Text style={styles.settingItemValue}>1.0.2</Text>
           </View>
         </View>
       </View>
