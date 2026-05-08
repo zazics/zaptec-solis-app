@@ -69,7 +69,7 @@ const SettingsScreen: React.FC = () => {
 
   const saveIpConfiguration = async () => {
     if (!newIp.trim()) {
-      Alert.alert("Erreur", "Veuillez entrer une adresse IP");
+      Alert.alert("Erreur", "Veuillez entrer une adresse de serveur");
       return;
     }
 
@@ -316,14 +316,14 @@ const SettingsScreen: React.FC = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Configuration et test de connexion</Text>
 
-            <Text style={styles.modalLabel}>Adresse IP</Text>
-            <TextInput style={styles.modalInput} value={newIp} onChangeText={setNewIp} placeholder="192.168.0.108" keyboardType="numeric" />
+            <Text style={styles.modalLabel}>Adresse du serveur</Text>
+            <TextInput style={styles.modalInput} value={newIp} onChangeText={setNewIp} placeholder="nospoon.ddnsfree.com" autoCapitalize="none" autoCorrect={false} keyboardType="url" />
 
             <Text style={styles.modalLabel}>Port</Text>
             <TextInput style={styles.modalInput} value={newPort} onChangeText={setNewPort} placeholder="3000" keyboardType="numeric" />
 
             <Text style={styles.modalNote}>
-              URL finale : http://{newIp || "192.168.0.108"}:{newPort || "3000"}
+              URL finale : http://{newIp || "nospoon.ddnsfree.com"}:{newPort || "3000"}
             </Text>
 
             {/* Status de connexion */}

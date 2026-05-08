@@ -21,7 +21,7 @@ const getEnvVar = (envVar: string, extraKey: string, fallback: string = ""): str
 const getDefaultApiConfig = (): ApiConfig => {
   const simulationMode = getEnvVar(SIMULATION_MODE, "SIMULATION_MODE", "false") === "true";
   return {
-    baseUrl: simulationMode ? "http://localhost:3000" : getEnvVar(API_BASE_URL, "API_BASE_URL", "http://192.168.0.151:3000"),
+    baseUrl: simulationMode ? "http://localhost:3000" : getEnvVar(API_BASE_URL, "API_BASE_URL", "http://nospoon.ddnsfree.com:3000"),
     timeout: parseInt(getEnvVar(API_TIMEOUT, "API_TIMEOUT", "10000")),
     useHttps: getEnvVar(API_USE_HTTPS, "API_USE_HTTPS", "false") === "true",
     simulationMode: simulationMode,
@@ -115,17 +115,15 @@ export class SettingsService {
   }
 
   /**
-   * Définir une adresse IP personnalisée pour le backend
+   * Définir une adresse personnalisée pour le backend (IP ou nom d'hôte)
    */
-  async setCustomBackendUrl(ip: string, port: number = 3000): Promise<ApiConfig> {
-    // Validation de l'IP
-    if (!this.isValidIpAddress(ip)) {
-      throw new Error("Adresse IP invalide");
+  async setCustomBackendUrl(host: string, port: number = 3000): Promise<ApiConfig> {
+    if (!this.isValidHost(host)) {
+      throw new Error("Adresse du serveur invalide");
     }
 
-    // Construction de l'URL
     const protocol = this.settings.api.useHttps ? "https" : "http";
-    const baseUrl = `${protocol}://${ip}:${port}`;
+    const baseUrl = `${protocol}://${host}:${port}`;
 
     await this.updateApiConfig({ baseUrl });
 
@@ -146,7 +144,7 @@ export class SettingsService {
    */
   async toggleSimulationMode(): Promise<ApiConfig> {
     const simulationMode = !this.settings.simulationMode;
-    const baseUrl = simulationMode ? "http://localhost:3000" : API_BASE_URL || "http://192.168.0.151:3000";
+    const baseUrl = simulationMode ? "http://localhost:3000" : API_BASE_URL || "http://nospoon.ddnsfree.com:3000";
 
     await this.saveSettings({ simulationMode });
     await this.updateApiConfig({ baseUrl, simulationMode });
@@ -176,11 +174,11 @@ export class SettingsService {
    */
   getDefaultBackendUrl(): string {
     const simulationMode = SIMULATION_MODE === "true" || false;
-    return simulationMode ? "http://localhost:3000" : API_BASE_URL || "http://192.168.0.151:3000";
+    return simulationMode ? "http://localhost:3000" : API_BASE_URL || "http://nospoon.ddnsfree.com:3000";
   }
 
   /**
-   * Extraire l'IP et le port d'une URL
+   * Extraire l'hôte et le port d'une URL
    */
   parseBackendUrl(url: string): { ip: string; port: number } {
     try {
@@ -190,16 +188,17 @@ export class SettingsService {
         port: parseInt(urlObj.port) || 3000
       };
     } catch {
-      return { ip: "192.168.0.108", port: 3000 };
+      return { ip: "nospoon.ddnsfree.com", port: 3000 };
     }
   }
 
   /**
-   * Valider une adresse IP
+   * Valider une adresse de serveur (IP ou nom d'hôte)
    */
-  private isValidIpAddress(ip: string): boolean {
+  private isValidHost(host: string): boolean {
     const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    return ipRegex.test(ip) || ip === "localhost";
+    const hostnameRegex = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+    return ipRegex.test(host) || hostnameRegex.test(host) || host === "localhost";
   }
 
   /**

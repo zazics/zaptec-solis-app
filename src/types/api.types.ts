@@ -40,7 +40,7 @@ export interface ApiError {
  * Stores information needed to connect to your system
  */
 export interface ApiConfig {
-  /** Base URL of your Node.js API (ex: http://192.168.1.100:3000) */
+  /** Base URL of your Node.js API (ex: http://nospoon.ddnsfree.com:3000) */
   baseUrl: string;
   /** API key for authentication */
   apiKey: string;

@@ -11,7 +11,7 @@ import { API_BASE_URL, API_TIMEOUT, API_RETRY_COUNT, API_RETRY_DELAY } from "@en
  * Default API configuration
  */
 export const DEFAULT_API_CONFIG = {
-  BASE_URL: API_BASE_URL || "http://192.168.0.151:3000",
+  BASE_URL: API_BASE_URL || "http://nospoon.ddnsfree.com:3000",
   TIMEOUT: parseInt(API_TIMEOUT) || 10000,
   RETRY_COUNT: parseInt(API_RETRY_COUNT) || 3,
   RETRY_DELAY: parseInt(API_RETRY_DELAY) || 1000
