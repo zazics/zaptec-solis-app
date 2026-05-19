@@ -7,7 +7,8 @@
  * - Monitor charging status (read-only)
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, ActivityIndicator, TouchableOpacity, Modal, TextInput, Switch } from "react-native";
 
 // Import types and services
@@ -100,19 +101,15 @@ const ZaptecScreen: React.FC = () => {
   // EFFECTS
   // ========================================
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isLoading && !isRefreshing) {
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+      const interval = setInterval(() => {
         loadData();
-      }
-    }, 10000); // Refresh every 10 seconds
-
-    return () => clearInterval(interval);
-  }, [isLoading, isRefreshing]);
+      }, 30000);
+      return () => clearInterval(interval);
+    }, [])
+  );
 
   // ========================================
   // INTERNAL COMPONENTS
@@ -213,9 +210,7 @@ const ZaptecScreen: React.FC = () => {
 
       {/* Navigation Tip */}
       <View style={styles.tipSection}>
-        <Text style={styles.tipText}>
-          📊 Consultez l'onglet "Charts" pour voir l'historique détaillé de consommation Zaptec
-        </Text>
+        <Text style={styles.tipText}>📊 Consultez l'onglet "Charts" pour voir l'historique détaillé de consommation Zaptec</Text>
       </View>
     </ScrollView>
   );
@@ -436,14 +431,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#28A745",
+    borderColor: "#28A745"
   },
   tipText: {
     fontSize: 14,
     color: "#155724",
     textAlign: "center",
-    lineHeight: 20,
-  },
+    lineHeight: 20
+  }
 });
 
 export default ZaptecScreen;

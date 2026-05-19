@@ -11,7 +11,8 @@
  * which are the equivalent of <div>, <p>, CSS on web.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Alert, ActivityIndicator, TouchableOpacity } from "react-native";
 
 // Import types and services
@@ -218,28 +219,15 @@ const HomeScreen: React.FC = () => {
   // EFFECTS (SIDE EFFECTS)
   // ========================================
 
-  /**
-   * useEffect with empty dependency array []
-   * Executes only once when component mounts (like componentDidMount)
-   */
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  /**
-   * useEffect with interval for automatic updates
-   * Updates data every 30 seconds
-   */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!isLoading && !isRefreshing) {
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+      const interval = setInterval(() => {
         loadData();
-      }
-    }, 30000); // 30 seconds
-
-    // Cleanup function: cleans up interval when component unmounts
-    return () => clearInterval(interval);
-  }, [isLoading, isRefreshing]);
+      }, 30000);
+      return () => clearInterval(interval);
+    }, [])
+  );
 
   // ========================================
   // CONDITIONAL RENDERING

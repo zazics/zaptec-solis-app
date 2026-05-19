@@ -67,7 +67,7 @@ class ApiService {
       },
       (error) => {
         // Centralized error handling
-        console.error("API Error:", error);
+        console.error("API Error:", this.axiosInstance.getUri());
 
         // Transform error to standardized format
         const apiError: ApiError = {
